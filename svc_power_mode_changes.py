@@ -7,7 +7,7 @@ import sys
 import argparse
 import serial
 
-T1_CMD = '/root/loopback_test sink 512 1000 /sys/bus/greybus/devices/endo0:1:1:1:13/ /dev/gb/loopback0'
+T1_CMD = '/root/loopback_test %s %s 1000 /sys/bus/greybus/devices/endo0:1:1:1:13/ /dev/gb/loopback0'
 T2_CMD = '/root/loopback_test sink 512 1000 /sys/bus/greybus/devices/endo0:1:2:1:13/ /dev/gb/loopback1'
 T5_CMD = '/root/loopback_test transfer 512 1000 /sys/bus/greybus/devices/endo0:1:1:1:13/ /dev/gb/loopback0'
 
@@ -135,16 +135,15 @@ def exec_loopback(rhost, cmd):
     check_call(['ssh', rhost, cmd])
 
 
-def exec_power_mode_changes(svc, host):
+def exec_power_mode_changes(svc, host, test, size, verbose):
 
     ssh_host = '%s@%s' % (USER, host)
-    csv_path = '/%s/transfer_512_1000.csv' % USER
-#    csv_path = '/%s/sink_512_1000.csv' % USER
+    csv_path = '/%s/%s_%s_1000.csv' % (USER, test, size)
     csv_url = '%s:%s' % (ssh_host, csv_path)
 
-    test_cmd = T5_CMD
+    test_cmd = T1_CMD % (test, size)
 
-#    info(ssh_host, csv_path, csv_url)
+    info(ssh_host, csv_path, csv_url, test, size, test_cmd)
 
     print('Erase previous CSV file (%s)' % csv_path)
     call(['ssh', ssh_host, 'rm %s' % csv_path])
@@ -159,9 +158,10 @@ def exec_power_mode_changes(svc, host):
             for cmd in cmds:
                 exec_cmd(svc, cmd)
 
-            # insert the test name into the CSV file
-            # TODO: add a new column into the CSV instead of new row
-            call(['ssh', ssh_host, 'echo "%s" >> %s' % (pwrm, csv_path)])
+            if verbose:
+                # insert the test name into the CSV file
+                # TODO: add a new column into the CSV instead of new row
+                call(['ssh', ssh_host, 'echo "%s" >> %s' % (pwrm, csv_path)])
 
             exec_loopback(ssh_host, test_cmd)
             exec_loopback(ssh_host, test_cmd)
@@ -190,6 +190,9 @@ def main():
                             SVC_DEFAULT_BAUD))
     parser.add_argument('svc', help='Path to SVC console tty')
     parser.add_argument('host', help='IP/hostname of target AP', default=HOST)
+    parser.add_argument('-s', '--size', default=512, help='Packet Size')
+    parser.add_argument('-t', '--test', default='sink', choices=['sink', 'transfer', 'ping'], help='Test type')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Add extra info in CSV')
     args = parser.parse_args()
 
     # Open the SVC console tty and flush any input characters.
@@ -207,7 +210,7 @@ def main():
 
     # Execute the above-defined power mode changes at the SVC
     # console.
-    exec_power_mode_changes(svc, args.host)
+    exec_power_mode_changes(svc, args.host, args.test, args.size, args.verbose)
 
 if __name__ == '__main__':
     main()
