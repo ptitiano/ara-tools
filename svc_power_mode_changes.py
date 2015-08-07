@@ -12,9 +12,9 @@ import serial
 
 T1_SYSFS = '/sys/bus/greybus/devices/endo0:1:1:1:13/'
 T2_SYSFS = '/sys/bus/greybus/devices/endo0:1:2:1:13/'
-T1_CMD = 'loopback_test %s %s 1000 ' + T1_SYSFS + ' /dev/gb/loopback0'
+T1_CMD = 'loopback_test {} {} 1000 ' + T1_SYSFS + ' /dev/gb/loopback0'
 T2_CMD = 'loopback_test sink 512 1000 ' + T2_SYSFS + ' /dev/gb/loopback1'
-APB_CMD = 'gbl -t %s -s %s -w 10 -n 1000 start'
+APB_CMD = 'gbl -t {} -s {} -w 10 -n 1000 start'
 
 
 # default IP of the AP
@@ -172,30 +172,28 @@ def exec_loopback(s, cmd):
 
 def run_from_ap(svc, host, test, size, verbose):
 
-    ssh_host = '%s@%s' % (USER, host)
-    csv_path = '/%s/%s_%s_1000.csv' % (USER, test, size)
-    csv_url = '%s:%s' % (ssh_host, csv_path)
+    ssh_host = '{}@{}'.format(USER, host)
+    csv_path = '/{}/{}_{}_1000.csv'.format(USER, test, size)
+    csv_url = '{}:{}'.format(ssh_host, csv_path)
 
-    ap_test_cmd = T1_CMD % (test, size)
+    ap_test_cmd = T1_CMD.format(test, size)
 
     info(ssh_host, csv_path, csv_url, test, size, ap_test_cmd)
 
-    print('Erase previous CSV file (%s)' % csv_path)
+    print('Erase previous CSV file ({})'.format(csv_path))
 
     s = pxssh.pxssh()
     s.login(host, USER)
-    s.sendline('rm %s' % csv_path)  # run a command
-    s.prompt()                      # match the prompt
-    print(s.before)    # print everything before the prompt.
-
-#    call(['ssh', ssh_host, 'rm %s' % csv_path])
+    s.sendline('rm {}'.format(csv_path))  # run a command
+    s.prompt()  # match the prompt
+    print(s.before)  # print everything before the prompt.
 
     count = 1
 
     try:
         for pwrm, cmds in PWRM_TO_CMDS:
 
-            print('\nTest (%d) - ' % count + pwrm + '\n')
+            print('\nTest ({}) - {}\n'.format(count, pwrm))
 
             for cmd in cmds:
                 exec_cmd(svc, cmd)
@@ -203,7 +201,8 @@ def run_from_ap(svc, host, test, size, verbose):
             if verbose:
                 # insert the test name into the CSV file
                 # TODO: add a new column into the CSV instead of new row
-                call(['ssh', ssh_host, 'echo "%s" >> %s' % (pwrm, csv_path)])
+                call(['ssh', ssh_host,
+                      'echo "{}" >> {}'.format(pwrm, csv_path)])
 
             exec_loopback(s, ap_test_cmd)
             exec_loopback(s, ap_test_cmd)
@@ -221,16 +220,16 @@ def run_from_ap(svc, host, test, size, verbose):
 
 def run_from_apbridge(svc, host, test, size, verbose, apb):
 
-    csv_path = 'apb_%s_%s_1000.csv' % (test, size)
+    csv_path = 'apb_{}_{}_1000.csv'.format(test, size)
 
     # gbl is using a slightly different name
-    apb_test_cmd = APB_CMD % (test.replace('transfer', 'xfer'), size)
+    apb_test_cmd = APB_CMD.format(test.replace('transfer', 'xfer'), size)
 
     info(csv_path, test, size, apb_test_cmd)
 
     f = fdpexpect.fdspawn(apb.fd, timeout=5)
 
-    print('Create CSV file (%s)' % csv_path)
+    print('Create CSV file ({})'.format(csv_path))
 
     with open(csv_path, "w") as fd:
 
@@ -239,7 +238,7 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
         try:
             for pwrm, cmds in PWRM_TO_CMDS:
 
-                print('\nTest (%d) - ' % count + pwrm + '\n')
+                print('\nTest ({}) - {}\n'.format(count, pwrm))
 
                 for cmd in cmds:
                     exec_cmd(svc, cmd)
@@ -248,23 +247,23 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
                     # insert the test name into the CSV file
                     # TODO: add a new column into the CSV instead of new row
                     call(['ssh', ssh_host,
-                          'echo "%s" >> %s' % (pwrm, csv_path)])
+                          'echo "{}" >> {}'.format(pwrm, csv_path)])
 
-                fd.write('%s,%s,%s,%s\n' %
+                fd.write('{},{},{},{}\n'.format(
                          (strftime("%c"),
                           test,
                           size,
-                          gbl_stats(f, apb_test_cmd)))
-                fd.write('%s,%s,%s,%s\n' %
+                          gbl_stats(f, apb_test_cmd))))
+                fd.write('{},{},{},{}\n'.format(
                          (strftime("%c"),
                           test,
                           size,
-                          gbl_stats(f, apb_test_cmd)))
-                fd.write('%s,%s,%s,%s\n' %
+                          gbl_stats(f, apb_test_cmd))))
+                fd.write('{},{},{},{}\n'.format(
                          (strftime("%c"),
                           test,
                           size,
-                          gbl_stats(f, apb_test_cmd)))
+                          gbl_stats(f, apb_test_cmd))))
 
                 count += 1
 
@@ -300,7 +299,7 @@ def main():
                         help='Run test from AP instead of APBridge')
     args = parser.parse_args()
 
-    info('AP host: %s' % args.host)
+    info('AP host: {}'.format(args.host))
 
     # Open the SVC and AP console ttys and flush any input characters.
     try:
