@@ -284,7 +284,7 @@ def main():
                             SVC_DEFAULT_BAUD))
     parser.add_argument('svc', help='Path to SVC console tty')
     parser.add_argument('host', help='IP/hostname of target AP', default=HOST)
-    parser.add_argument('apb', help='apbridge1 tty', default=None)
+    parser.add_argument('apb', help='apbridge2 tty', default=None)
     parser.add_argument('-s', '--size', default=512, help='Packet Size')
     parser.add_argument('-t', '--test',
                         default='sink',
