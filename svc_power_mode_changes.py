@@ -292,19 +292,25 @@ def main():
     parser.add_argument('--ap', action='store_true', help='Run test from AP instead of APBridge')
     args = parser.parse_args()
 
-    # Open the SVC console tty and flush any input characters.
-    info('opening SVC at: {}, {} baud'.format(args.svc, args.baudrate))
     info('AP host: %s' % args.host)
+
+    # Open the SVC and AP console ttys and flush any input characters.
     try:
+        info('opening SVC console at: {}, {} baud'.format(
+                args.svc, args.baudrate))
         svc = serial.Serial(port=args.svc, baudrate=args.baudrate)
-        apb = serial.Serial(port=args.apb, baudrate=args.baudrate)
-    except:
-        fatal_err('failed to open SVC')
-    try:
+        info('flushing SVC input buffer')
         svc.flushInput()
-        info('flushed SVC input buffer')
     except:
-        fatal_err("couldn't flush SVC input buffer")
+        fatal_err('failed initializing SVC')
+    try:
+        info('opening APBridgeA console at: {}, {} baud'.format(
+                args.apb, args.baudrate))
+        apb = serial.Serial(port=args.apb, baudrate=args.baudrate)
+        info('flushing APBridgeA input buffer')
+        apb.flushInput()
+    except:
+        fatal_err('failed initializing APBridgeA')
 
     # Execute the above-defined power mode changes at the SVC
     # console.
