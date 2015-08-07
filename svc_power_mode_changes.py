@@ -10,8 +10,8 @@ import sys
 import argparse
 import serial
 
-T1_CMD = '/root/loopback_test %s %s 1000 /sys/bus/greybus/devices/endo0:1:1:1:13/ /dev/gb/loopback0'
-T2_CMD = '/root/loopback_test sink 512 1000 /sys/bus/greybus/devices/endo0:1:2:1:13/ /dev/gb/loopback1'
+T1_CMD = 'loopback_test %s %s 1000 /sys/bus/greybus/devices/endo0:1:1:1:13/ /dev/gb/loopback0'
+T2_CMD = 'loopback_test sink 512 1000 /sys/bus/greybus/devices/endo0:1:2:1:13/ /dev/gb/loopback1'
 APB_CMD = 'gbl -t %s -s %s -w 10 -n 1000 start'
 
 # default IP of the AP
