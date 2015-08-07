@@ -189,28 +189,24 @@ def run_from_ap(svc, host, test, size, verbose):
 
     count = 1
 
-    try:
-        for pwrm, cmds in PWRM_TO_CMDS:
+    for pwrm, cmds in PWRM_TO_CMDS:
 
-            info('\nTest ({}) - {}\n'.format(count, pwrm))
+        info('\nTest ({}) - {}\n'.format(count, pwrm))
 
-            for cmd in cmds:
-                exec_cmd(svc, cmd)
+        for cmd in cmds:
+            exec_cmd(svc, cmd)
 
-            if verbose:
-                # insert the test name into the CSV file
-                # TODO: add a new column into the CSV instead of new row
-                call(['ssh', ssh_host,
-                      'echo "{}" >> {}'.format(pwrm, csv_path)])
+        if verbose:
+            # insert the test name into the CSV file
+            # TODO: add a new column into the CSV instead of new row
+            call(['ssh', ssh_host,
+                  'echo "{}" >> {}'.format(pwrm, csv_path)])
 
-            exec_loopback(s, ap_test_cmd)
-            exec_loopback(s, ap_test_cmd)
-            exec_loopback(s, ap_test_cmd)
+        exec_loopback(s, ap_test_cmd)
+        exec_loopback(s, ap_test_cmd)
+        exec_loopback(s, ap_test_cmd)
 
-            count += 1
-
-    except KeyboardInterrupt:
-        info('\nKeyboardInterrupt')
+        count += 1
 
     # transfer the results CSV file to from AP to Host
     call(['scp', csv_url, '.'])
@@ -234,40 +230,36 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
 
         count = 1
 
-        try:
-            for pwrm, cmds in PWRM_TO_CMDS:
+        for pwrm, cmds in PWRM_TO_CMDS:
 
-                info('\nTest ({}) - {}\n'.format(count, pwrm))
+            info('\nTest ({}) - {}\n'.format(count, pwrm))
 
-                for cmd in cmds:
-                    exec_cmd(svc, cmd)
+            for cmd in cmds:
+                exec_cmd(svc, cmd)
 
-                if verbose:
-                    # insert the test name into the CSV file
-                    # TODO: add a new column into the CSV instead of new row
-                    call(['ssh', ssh_host,
-                          'echo "{}" >> {}'.format(pwrm, csv_path)])
+            if verbose:
+                # insert the test name into the CSV file
+                # TODO: add a new column into the CSV instead of new row
+                call(['ssh', ssh_host,
+                      'echo "{}" >> {}'.format(pwrm, csv_path)])
 
-                fd.write('{},{},{},{}\n'.format(
-                         (strftime("%c"),
-                          test,
-                          size,
-                          gbl_stats(f, apb_test_cmd))))
-                fd.write('{},{},{},{}\n'.format(
-                         (strftime("%c"),
-                          test,
-                          size,
-                          gbl_stats(f, apb_test_cmd))))
-                fd.write('{},{},{},{}\n'.format(
-                         (strftime("%c"),
-                          test,
-                          size,
-                          gbl_stats(f, apb_test_cmd))))
+            fd.write('{},{},{},{}\n'.format(
+                     (strftime("%c"),
+                      test,
+                      size,
+                      gbl_stats(f, apb_test_cmd))))
+            fd.write('{},{},{},{}\n'.format(
+                     (strftime("%c"),
+                      test,
+                      size,
+                      gbl_stats(f, apb_test_cmd))))
+            fd.write('{},{},{},{}\n'.format(
+                     (strftime("%c"),
+                      test,
+                      size,
+                      gbl_stats(f, apb_test_cmd))))
 
-                count += 1
-
-        except KeyboardInterrupt:
-            info('\nKeyboardInterrupt')
+            count += 1
 
 
 #
