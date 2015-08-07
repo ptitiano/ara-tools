@@ -116,7 +116,7 @@ def gbl_stats(f, cmd):
 
     f.sendline('gbl stop')
     f.expect('nsh>')
-    print(f.before.strip())
+    info(f.before.strip())
 
     # split the cmd otherwise, nuttx is missing some
     # characters
@@ -124,23 +124,22 @@ def gbl_stats(f, cmd):
         f.send(c + ' ')
     f.sendline()
     f.expect('nsh>')
-    print(f.before.strip())
+    info(f.before.strip())
 
     # Wait until completion 'ACTIVE = no'
     while True:
         st = gbl_status(f)
-#        print(st)
         if st[1] == 'no':
             break
         else:
             sleep(1)
 
     f.sendline('gbl -f csv status')
-    print(f.readline().strip())
+    info(f.readline().strip())
     f.readline()
     f.readline()
     f.expect('nsh>')
-    print(f.before.strip())
+    info(f.before.strip())
 
     return f.before.strip()
 
@@ -167,7 +166,7 @@ def exec_cmd(svc, cmd):
 def exec_loopback(s, cmd):
     s.sendline(cmd)  # run a command
     s.prompt()       # match the prompt
-    print(s.before)  # print everything before the prompt.
+    info(s.before)   # print everything before the prompt.
 
 
 def run_from_ap(svc, host, test, size, verbose):
@@ -180,20 +179,20 @@ def run_from_ap(svc, host, test, size, verbose):
 
     info(ssh_host, csv_path, csv_url, test, size, ap_test_cmd)
 
-    print('Erase previous CSV file ({})'.format(csv_path))
+    info('Erase previous CSV file ({})'.format(csv_path))
 
     s = pxssh.pxssh()
     s.login(host, USER)
     s.sendline('rm {}'.format(csv_path))  # run a command
     s.prompt()  # match the prompt
-    print(s.before)  # print everything before the prompt.
+    info(s.before)  # print everything before the prompt.
 
     count = 1
 
     try:
         for pwrm, cmds in PWRM_TO_CMDS:
 
-            print('\nTest ({}) - {}\n'.format(count, pwrm))
+            info('\nTest ({}) - {}\n'.format(count, pwrm))
 
             for cmd in cmds:
                 exec_cmd(svc, cmd)
@@ -229,7 +228,7 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
 
     f = fdpexpect.fdspawn(apb.fd, timeout=5)
 
-    print('Create CSV file ({})'.format(csv_path))
+    info('Create CSV file ({})'.format(csv_path))
 
     with open(csv_path, "w") as fd:
 
@@ -238,7 +237,7 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
         try:
             for pwrm, cmds in PWRM_TO_CMDS:
 
-                print('\nTest ({}) - {}\n'.format(count, pwrm))
+                info('\nTest ({}) - {}\n'.format(count, pwrm))
 
                 for cmd in cmds:
                     exec_cmd(svc, cmd)
