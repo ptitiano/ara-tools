@@ -145,17 +145,6 @@ def gbl_stats(f, cmd):
     return f.before.strip()
 
 
-def wait_for_ret_or_abort():
-    try:
-        while True:
-            c = sys.stdin.read(1)
-            info('mbolivar:', ord(c))
-            if c == '\r' or c == '\n':
-                return
-    except KeyboardInterrupt:
-        sys.exit(0)
-
-
 def exec_cmd(svc, cmd):
     nsh_prompt = 'nsh> '
     buf = []
