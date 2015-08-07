@@ -10,9 +10,12 @@ import sys
 import argparse
 import serial
 
-T1_CMD = 'loopback_test %s %s 1000 /sys/bus/greybus/devices/endo0:1:1:1:13/ /dev/gb/loopback0'
-T2_CMD = 'loopback_test sink 512 1000 /sys/bus/greybus/devices/endo0:1:2:1:13/ /dev/gb/loopback1'
+T1_SYSFS = '/sys/bus/greybus/devices/endo0:1:1:1:13/'
+T2_SYSFS = '/sys/bus/greybus/devices/endo0:1:2:1:13/'
+T1_CMD = 'loopback_test %s %s 1000 ' + T1_SYSFS + ' /dev/gb/loopback0'
+T2_CMD = 'loopback_test sink 512 1000 ' + T2_SYSFS + ' /dev/gb/loopback1'
 APB_CMD = 'gbl -t %s -s %s -w 10 -n 1000 start'
+
 
 # default IP of the AP
 HOST = '192.168.3.2'
@@ -106,7 +109,6 @@ def gbl_status(f):
     f.sendline('gbl status')
     f.expect('REQ_PER_SEQ')
     f.expect('nsh>')
-    #print(f.before)
     return f.before.split()
 
 
@@ -124,13 +126,11 @@ def gbl_stats(f, cmd):
     f.expect('nsh>')
     print(f.before.strip())
 
-
     # Wait until completion 'ACTIVE = no'
     while True:
         st = gbl_status(f)
 #        print(st)
         if st[1] == 'no':
-#            print(st)
             break
         else:
             sleep(1)
@@ -165,10 +165,9 @@ def exec_cmd(svc, cmd):
 
 
 def exec_loopback(s, cmd):
-#    check_call(['ssh', rhost, cmd])
-    s.sendline(cmd) # run a command
-    s.prompt()      # match the prompt
-    print(s.before) # print everything before the prompt.
+    s.sendline(cmd)  # run a command
+    s.prompt()       # match the prompt
+    print(s.before)  # print everything before the prompt.
 
 
 def run_from_ap(svc, host, test, size, verbose):
@@ -248,11 +247,24 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
                 if verbose:
                     # insert the test name into the CSV file
                     # TODO: add a new column into the CSV instead of new row
-                    call(['ssh', ssh_host, 'echo "%s" >> %s' % (pwrm, csv_path)])
+                    call(['ssh', ssh_host,
+                          'echo "%s" >> %s' % (pwrm, csv_path)])
 
-                fd.write('%s,%s,%s,%s\n' % (strftime("%c"), test, size, gbl_stats(f, apb_test_cmd)))
-                fd.write('%s,%s,%s,%s\n' % (strftime("%c"), test, size, gbl_stats(f, apb_test_cmd)))
-                fd.write('%s,%s,%s,%s\n' % (strftime("%c"), test, size, gbl_stats(f, apb_test_cmd)))
+                fd.write('%s,%s,%s,%s\n' %
+                         (strftime("%c"),
+                          test,
+                          size,
+                          gbl_stats(f, apb_test_cmd)))
+                fd.write('%s,%s,%s,%s\n' %
+                         (strftime("%c"),
+                          test,
+                          size,
+                          gbl_stats(f, apb_test_cmd)))
+                fd.write('%s,%s,%s,%s\n' %
+                         (strftime("%c"),
+                          test,
+                          size,
+                          gbl_stats(f, apb_test_cmd)))
 
                 count += 1
 
@@ -276,9 +288,16 @@ def main():
     parser.add_argument('host', help='IP/hostname of target AP', default=HOST)
     parser.add_argument('apb', help='apbridge1 tty', default=None)
     parser.add_argument('-s', '--size', default=512, help='Packet Size')
-    parser.add_argument('-t', '--test', default='sink', choices=['sink', 'transfer', 'ping'], help='Test type')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Add extra info in CSV')
-    parser.add_argument('--ap', action='store_true', help='Run test from AP instead of APBridge')
+    parser.add_argument('-t', '--test',
+                        default='sink',
+                        choices=['sink', 'transfer', 'ping'],
+                        help='Test type')
+    parser.add_argument('-v', '--verbose',
+                        action='store_true',
+                        help='Add extra info in CSV')
+    parser.add_argument('--ap',
+                        action='store_true',
+                        help='Run test from AP instead of APBridge')
     args = parser.parse_args()
 
     info('AP host: %s' % args.host)
@@ -306,7 +325,8 @@ def main():
     if args.ap:
         run_from_ap(svc, args.host, args.test, args.size, args.verbose)
     else:
-        run_from_apbridge(svc, args.host, args.test, args.size, args.verbose, apb)
+        run_from_apbridge(svc, args.host, args.test, args.size, args.verbose,
+                          apb)
 
 if __name__ == '__main__':
     main()
