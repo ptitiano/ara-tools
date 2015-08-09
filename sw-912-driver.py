@@ -172,7 +172,7 @@ def exec_loopback(s, cmd):
 def run_from_ap(svc, host, test, size, verbose):
 
     ssh_host = '{}@{}'.format(USER, host)
-    csv_path = '/{}/{}_{}_1000.csv'.format(USER, test, size)
+    csv_path = '~{}/{}_{}_1000.csv'.format(USER, test, size)
     csv_url = '{}:{}'.format(ssh_host, csv_path)
 
     ap_test_cmd = T1_CMD.format(test, size)
