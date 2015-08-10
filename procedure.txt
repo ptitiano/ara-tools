@@ -1,0 +1,283 @@
+This is the procedure for doing SW-912 (ES2 System Validation) tests.
+
+You will need:
+
+1. 1 pcs BDB2 kit (with debug boards, SF-100, and J-Link for
+   programming SVC and bridge ASICs).
+
+2. 1 pcs BeagleBone Black (BBB) with 4 GB eMMC (you can change the
+   "BBB Setup" below to start with a different flasher image if you
+   have a different flavor of BeagleBone Black).
+
+3. Linux PC set up for development.
+
+----------------------------------------------------------------------
+GENERAL SETUP INSTRUCTIONS
+----------------------------------------------------------------------
+
+Linux and Big Development Board 2 (BDB2) Setup
+----------------------------------------------
+
+1. If you haven't already, follow the Firmware Wiki Quickstart Guide
+   to set up your firmware build environment.
+
+        https://github.com/projectara/Firmware-wiki/wiki/Software-Setup
+
+2. Install other dependencies for running the tests.
+
+        sudo apt-get install python-serial
+
+3. Fetch the NuttX feature branch for SW-912, which is here:
+
+        https://github.com/mbolivar/nuttx/tree/sw-912
+
+   I.e., the NuttX remote is git@github.com:mbolivar/nuttx.git, and
+   the branch is sw-912.
+
+4. From the sw-912 feature branch, build and flash these NuttX
+   defconfigs on these targets on BDB2:
+
+        defconfig                       Install On
+        ---------                       ----------
+        ara/bridge/es2-debug-apbridgea  APB1
+        ara/bridge/es2-debug-generic    APB2, APB3, GPB1
+        ara/svc/bdb2a                   SVC
+
+   To build the defconfigs, run this from the NuttX root directory:
+
+        ./build_ara_image.sh ara bridge/es2-debug-apbridgea && \
+            ./build_ara_image.sh ara bridge/es2-debug-generic && \
+            ./build_ara_image.sh ara svc/bdb2a
+
+   To flash, follow HOWTOs for bridges and SVC on the firmware wiki:
+
+        https://github.com/projectara/Firmware-wiki/wiki/Flashing-images
+
+5. Connect the SVC and APB2 UARTs to the host PC.
+
+   - SVC: USB/UART converter at BDB2 CON12.
+
+   - APB2: BDB debug board, FPC connected to APB2's SPI/JTAG/UART
+     connector, CON19.
+
+   Some images/instructions that may be helpful:
+
+   https://github.com/projectara/Firmware-wiki/wiki/Hardware-Setup
+
+6. To ensure it doesn't mess with the testing, hold GPB2 in reset
+   using SW6 on BDB2 (move SW6 towards its pin 1 to keep GPB2 in
+   reset).
+
+BeagleBone Black (BBB) Setup
+----------------------------
+
+1. Install Debian 7.8 on BBB using eMMC flasher image:
+
+         http://elinux.org/Beagleboard:BeagleBoneBlack_Debian#BBB_Rev_C_.284GB_eMMC.29_4GB_eMMC_Flasher
+
+   Flash the flasher image onto an SD card, insert it into BBB, and
+   boot. Wait for flashing to eMMC to complete, watching progress on
+   the UART console.
+
+   To get a root UART console, connect an FTDI breakout board to UART
+   pins on BBB J1.
+
+2. After flashing to eMMC finishes, update and install prereqs from
+   BBB root console:
+
+        # Run on BBB via UART console
+        apt-get update && apt-get upgrade
+        apt-get install git build-essential
+
+3. Update kernel and other greybus build dependencies:
+
+        # Run on BBB via UART root console
+        sudo apt-get install linux-image-4.1.4-bone15 \
+                             linux-headers-4.1.4-bone15 \
+                             linux-firmware-image-4.1.4-bone15
+
+   Then reboot and verify it worked. Example:
+
+        root@beaglebone:~# uname -r
+        4.1.4-bone15
+
+4. Fetch Greybus and gbsim on BBB and build the pieces you will need:
+
+        # Run on BBB via UART console
+        mkdir -p src/greybus src/gbsim
+        cd ~/src/greybus
+        make && make install
+        cd ~/src/gbsim/test/loopback
+        make
+
+   Then make sure ~/src/gbsim/test/loopback is in your PATH.
+
+5. Set up SSH pubkey authentication between your host PC and BBB:
+
+        # Run from host Linux PC
+        ssh-copy-id root@<beaglebone-ip-address>
+
+   Verify it worked by logging in. Example:
+
+        lozenge: ~ mbolivar$ ssh root@10.0.8.152
+        Debian GNU/Linux 7
+
+        BeagleBoard.org Debian Image 2015-03-01
+
+        Support/FAQ: http://elinux.org/Beagleboard:BeagleBoneBlack_Debian
+
+        default username:password is [debian:temppwd]
+
+        Last login: Sun Aug  9 23:27:17 2015 from lozenge.industry-lab.com
+        root@beaglebone:~#
+
+----------------------------------------------------------------------
+TEST PROCEDURE
+----------------------------------------------------------------------
+
+To run a particular test:
+
+1. Make sure you've followed the environment setup instructions above:
+
+        - BeagleBone Black (BBB) Setup
+        - Big Development Board 2 (BDB2) Setup
+        - Linux Workstation Setup
+
+
+2. Find the SVC and APB2 tty devices, as well as the IP address for
+   the BBB's IP address on your LAN, then cache them in the
+   environment as LBTEST_SVC, LBTEST_APB2, and LBTEST_AP_IP,
+   respectively.
+
+   Example settings:
+
+        # SVC tty
+        export LBTEST_SVC=/dev/ttyUSB1
+
+        # APB2 tty
+        export LBTEST_APB2=/dev/ttyUSB0
+
+        # BBB IP address
+        export LBTEST_AP_IP=10.0.8.152
+
+3. Unplug BBB USB host connector (other end of USB cable should be on
+   APB1 USB device on BDB2, which is CON128).
+
+4. Reboot BBB.
+
+5. Power cycle BDB2.
+
+6. Insert greybus modules on BBB:
+
+        export GB=/lib/modules/`uname -r`/kernel/drivers/greybus
+        insmod $GB/greybus.ko
+        insmod $GB/gb-es2.ko
+        insmod $GB/gb-loopback.ko
+
+7. Insert USB cable from APB1 on BDB2 (CON128) to BBB USB host.
+
+8. Use sw-912-driver.py to run the test you are interested in. The
+   procedure to run each test is documented in the following
+   sub-items. Run from the Linux host PC shell.
+
+   8.1 T1
+
+        ./sw-912-driver.py $LBTEST_SVC \
+                           $LBTEST_AP_IP \
+                           $LBTEST_APB2 \
+                           --ap -t sink
+
+   8.2 T2
+
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+        XXX      FIXME        XXX
+        XXX                   XXX
+        XXX Need instructions XXX
+        XXX                   XXX
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+
+   8.3 T3
+
+        ./sw-912-driver.py $LBTEST_SVC \
+                           $LBTEST_AP_IP \
+                           $LBTEST_APB2 \
+                           -t sink
+
+   8.4 T4
+
+        ./sw-912-driver.py $LBTEST_SVC \
+                           $LBTEST_AP_IP \
+                           $LBTEST_APB2 \
+                           -t transfer
+
+   8.5 T5
+
+        ./sw-912-driver.py $LBTEST_SVC \
+                           $LBTEST_AP_IP \
+                           $LBTEST_APB2 \
+                           --ap -t transfer
+
+   8.6 T1'
+
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+        XXX      FIXME        XXX
+        XXX                   XXX
+        XXX Need instructions XXX
+        XXX                   XXX
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+
+   8.7 T2'
+
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+        XXX      FIXME        XXX
+        XXX                   XXX
+        XXX Need instructions XXX
+        XXX                   XXX
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+
+   8.8 T3'
+
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+        XXX      FIXME        XXX
+        XXX                   XXX
+        XXX Need instructions XXX
+        XXX                   XXX
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+
+   8.9 T4'
+
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+        XXX      FIXME        XXX
+        XXX                   XXX
+        XXX Need instructions XXX
+        XXX                   XXX
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+
+   8.10 T5'
+
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+        XXX      FIXME        XXX
+        XXX                   XXX
+        XXX Need instructions XXX
+        XXX                   XXX
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+
+9. Collect results after test is finished.
+
+   - Tests T1 and T5 will leave a .csv on the BBB in root's home
+     directory. 
+
+   - Tests T2 and T2' ...
+
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+        XXX      FIXME        XXX
+        XXX                   XXX
+        XXX Need instructions XXX
+        XXX                   XXX
+        XXXXXXXXXXXXXXXXXXXXXXXXX
+
+   - Tests T3 and T4 leave a .csv in the same directory from which
+     sw-912-driver.py was run.
+
+  In each case, the early console output from the Python script tells
+  you where they are.
