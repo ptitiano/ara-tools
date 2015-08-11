@@ -111,7 +111,10 @@ BeagleBone Black (BBB) Setup
 6. Fetch Greybus and gbsim on BBB and build the pieces you will need:
 
         # Run on BBB via UART console
-        mkdir -p src/greybus src/gbsim
+        mkdir -p ~/src
+        cd ~/src
+        git clone git@github.com:projectara/gbsim.git
+        git clone git@github.com:projectara/greybus.git
         cd ~/src/greybus
         make && make install
         cd ~/src/gbsim/test/loopback
