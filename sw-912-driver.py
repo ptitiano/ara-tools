@@ -146,23 +146,11 @@ def gbl_stats(f, cmd):
     return f.before.strip()
 
 
-def exec_cmd(svc, cmd):
-    nsh_prompt = 'nsh> '
-    buf = []
+def exec_svc_cmd(svc, cmd):
 
-    try:
-        svc.write(''.join(buf) + cmd + '\n')
-        while True:
-            if svc.inWaiting():
-                c = svc.read()
-                buf.append(c)
-                if c == '\n':
-                    svc_io(''.join(buf), end='')
-                    buf = []
-                if len(buf) >= len(nsh_prompt) and ''.join(buf) == nsh_prompt:
-                    return  # got nsh> prompt
-    except IOError as e:
-        fatal_err("couldn't set power mode:", str(e))
+    svc.sendline(cmd)
+    svc.expect('nsh>')
+    info(svc.before.strip())
 
 
 def exec_loopback(ssh, cmd):
@@ -182,6 +170,8 @@ def run_from_ap(svc, host, test, size, verbose):
 
     info(ssh_host, csv_path, csv_url, test, size, ap_test_cmd)
 
+    svcfd = fdpexpect.fdspawn(svc.fd, timeout=5)
+
     info('Erase previous CSV file ({})'.format(csv_path))
 
     s = pxssh.pxssh()
@@ -198,7 +188,7 @@ def run_from_ap(svc, host, test, size, verbose):
             info('\nTest ({}) - {}\n'.format(count, pwrm))
 
             for cmd in cmds:
-                exec_cmd(svc, cmd)
+                exec_svc_cmd(svcfd, cmd)
 
             if verbose:
                 # insert the test name into the CSV file
@@ -229,6 +219,8 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
 
     info(csv_path, test, size, apb_test_cmd)
 
+    svcfd = fdpexpect.fdspawn(svc.fd, timeout=5)
+
     f = fdpexpect.fdspawn(apb.fd, timeout=5)
 
     info('Create CSV file ({})'.format(csv_path))
@@ -243,7 +235,7 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
                 info('\nTest ({}) - {}\n'.format(count, pwrm))
 
                 for cmd in cmds:
-                    exec_cmd(svc, cmd)
+                    exec_svc_cmd(svcfd, cmd)
 
                 if verbose:
                     # insert the test name into the CSV file
