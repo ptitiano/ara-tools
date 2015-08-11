@@ -4,11 +4,14 @@ from __future__ import print_function
 from collections import OrderedDict
 from subprocess import call, check_call
 from time import sleep, strftime
-import fdpexpect
+from pprint import pprint
+import pexpect, fdpexpect
 import pxssh
 import sys
 import argparse
 import serial
+import glob
+import re
 
 T1_SYSFS = '/sys/bus/greybus/devices/endo0:1:1:1:13/'
 T2_SYSFS = '/sys/bus/greybus/devices/endo0:1:2:1:13/'
@@ -297,6 +300,71 @@ def get_device_path(dev):
      return '/dev/{}'.format(dev.replace('!','/'))
 
 
+def id_to_name(did):
+    if did < 4:
+        return 'APB{}'.format(did)
+    else:
+        return 'GPB{}'.format(did - 3)
+
+#
+# Use to store information relative to the target.
+# target can be BBB, SVC or any bridges (AP, GP)
+#
+class Target():
+
+    def __init__(self, name, tty='', did=0):
+        if did > 0:
+            self.name = id_to_name(did)
+        else:
+            self.name = name
+        self.tty = tty
+        self.did = did
+        self.sysfs = ''
+        self.dev = ''
+
+    def __repr__(self):
+        return '{}, {}, {}, {}, {}'.format(
+                self.name, self.did, self.tty, self.dev, self.sysfs)
+
+
+def get_usb_tty():
+
+    return glob.glob('/dev/ttyUSB*')
+
+
+def get_target_type(tty, baudrate):
+
+    ser = serial.Serial(port=tty, baudrate=baudrate)
+    ser.flushInput()
+    fdp = fdpexpect.fdspawn(ser.fd, timeout=10)
+
+    try:
+        fdp.sendline('help')
+        fdp.expect(['nsh>', 'bash', 'Password', 'Login'])
+    except pexpect.TIMEOUT:
+        info('timeout {}'.format(fdp.before.strip()))
+        return Target('UNK', tty)
+    except pexpect.EOF:
+        info('EOF: Cannot reach the console')
+        return Target('UNK', tty)
+
+    if 'nsh>' in fdp.after:
+        if 'svc' in fdp.before:
+            return Target('SVC', tty)
+
+        try:
+            fdp.sendline('unipro r 0x3000 0')
+            fdp.expect('nsh>')
+            m = re.search('val: (\d)', fdp.before)
+            d = int(m.group(1))
+            return Target('', tty, d)
+        except pexpect.TIMEOUT:
+            info('{} timeout {}'.format(tty, fdp.before.strip()))
+            return Target('UNK', tty)
+    else:
+        return Target('BBB', tty)
+
+
 #
 # main
 #
@@ -305,13 +373,12 @@ def get_device_path(dev):
 def main():
     # Parse arguments.
     parser = argparse.ArgumentParser()
-    parser.add_argument('-b', '--baudrate',
+    parser.add_argument('-r', '--baudrate',
                         default=SVC_DEFAULT_BAUD,
                         help='baud rate of SVC/APB tty, default {}'.format(
                             SVC_DEFAULT_BAUD))
-    parser.add_argument('svc', help='Path to SVC console tty')
     parser.add_argument('host', help='IP/hostname of target AP', default=HOST)
-    parser.add_argument('apb', help='apbridge2 tty', default=None)
+    parser.add_argument('-b', '--bridge', help='apbridge2 tty', default='APB2')
     parser.add_argument('-s', '--size', default=512, help='Packet Size')
     parser.add_argument('-t', '--test',
                         default='sink',
@@ -326,8 +393,23 @@ def main():
     parser.add_argument('-l', '--list',
                         action='store_true',
                         help='List loopback devices')
+    parser.add_argument('-u', '--usb',
+                        action='store_true',
+                        help='List USB tty')
     args = parser.parse_args()
 
+
+    info('Enumerating and probing tty USB consoles')
+
+    targets = {}
+
+    for tty in get_usb_tty():
+        t = get_target_type(tty, args.baudrate)
+        info('  {} -> {}'.format(t.name, t.tty))
+        targets[t.name] = t
+
+    if args.usb:
+        return
 
     info('Enumerating loopback devices in the endo...')
 
@@ -335,14 +417,20 @@ def main():
         ssh = pxssh.pxssh()
         ssh.login(args.host, USER)
         devs = get_devices(ssh)
-        for dev in devs:
-            p = get_device_sysfslink(ssh, dev)
-            d = get_device_id(ssh, p)
-            info('device_id[{}]={}, dev={}'.format(
-                    d, p.split('/')[-1], get_device_path(dev)))
-        ssh.logout()
     except:
         fatal_err('failed initializing AP connection through SSH')
+
+    for dev in devs:
+        p = get_device_sysfslink(ssh, dev)
+        d = int(get_device_id(ssh, p))
+        n = id_to_name(d)
+        targets[n].sysfs = p
+        targets[n].dev = get_device_path(dev)
+        info('{}[{}]={}, dev={}'.format(
+                n, d, p.split('/')[-1], get_device_path(dev)))
+
+    ssh.logout()
+
 
     if args.list:
         return
@@ -351,21 +439,25 @@ def main():
 
     # Open the SVC and AP console ttys and flush any input characters.
     try:
-        info('opening SVC console at: {}, {} baud'.format(
-                args.svc, args.baudrate))
-        svc = serial.Serial(port=args.svc, baudrate=args.baudrate)
+        info('opening SVC console {} at: {} baud'.format(
+                targets['SVC'].tty, args.baudrate))
+        svc = serial.Serial(port=targets['SVC'].tty, baudrate=args.baudrate)
         info('flushing SVC input buffer')
         svc.flushInput()
     except:
         fatal_err('failed initializing SVC')
+
+
+    bridge = targets[args.bridge]
+
     try:
-        info('opening APBridgeA console at: {}, {} baud'.format(
-                args.apb, args.baudrate))
-        apb = serial.Serial(port=args.apb, baudrate=args.baudrate)
-        info('flushing APBridgeA input buffer')
+        info('opening {} console {} at: {} baud'.format(
+                bridge.name, bridge.tty, args.baudrate))
+        apb = serial.Serial(port=bridge.tty, baudrate=args.baudrate)
+        info('flushing {} input buffer'.format(bridge.name))
         apb.flushInput()
     except:
-        fatal_err('failed initializing APBridgeA')
+        fatal_err('failed initializing ' + bridge.name)
 
     # Execute the above-defined power mode changes at the SVC
     # console.
