@@ -14,7 +14,7 @@ T1_SYSFS = '/sys/bus/greybus/devices/endo0:1:1:1:13/'
 T2_SYSFS = '/sys/bus/greybus/devices/endo0:1:2:1:13/'
 T1_CMD = 'loopback_test {} {} 1000 ' + T1_SYSFS + ' /dev/gb/loopback0'
 T2_CMD = 'loopback_test sink 512 1000 ' + T2_SYSFS + ' /dev/gb/loopback1'
-APB_CMD = 'gbl -t {} -s {} -w 10 -n 1000 start'
+APB_CMD = 'gbl -t {} -s {} -w 10 -n 10 start'
 
 ROOT_GBL = '/sys/class/gb_loopback'
 
