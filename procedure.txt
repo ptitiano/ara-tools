@@ -103,10 +103,17 @@ BeagleBone Black (BBB) Setup
                              linux-headers-4.1.4-bone15 \
                              linux-firmware-image-4.1.4-bone15
 
-   Then reboot and verify it worked. Example:
+   Reboot and verify it worked. Example:
 
+        # Run on BBB via UART root console
         root@beaglebone:~# uname -r
         4.1.4-bone15
+
+   By default debian image is setup to display time in utc mode. If you are in
+   a different timezone, clock skew warnings may be issues later while building
+   greybus/gbsim modules. Change timezone to your local region:
+        # Run on BBB via UART root console
+        dpkg-reconfigure tzdata
 
 6. Fetch Greybus and gbsim on BBB and build the pieces you will need:
 
