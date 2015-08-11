@@ -252,20 +252,20 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
                           'echo "{}" >> {}'.format(pwrm, csv_path)])
 
                 fd.write('{},{},{},{}\n'.format(
-                         (strftime("%c"),
+                          strftime("%c"),
                           test,
                           size,
-                          gbl_stats(f, apb_test_cmd))))
+                          gbl_stats(f, apb_test_cmd)))
                 fd.write('{},{},{},{}\n'.format(
-                         (strftime("%c"),
+                          strftime("%c"),
                           test,
                           size,
-                          gbl_stats(f, apb_test_cmd))))
+                          gbl_stats(f, apb_test_cmd)))
                 fd.write('{},{},{},{}\n'.format(
-                         (strftime("%c"),
+                          strftime("%c"),
                           test,
                           size,
-                          gbl_stats(f, apb_test_cmd))))
+                          gbl_stats(f, apb_test_cmd)))
 
                 count += 1
 
