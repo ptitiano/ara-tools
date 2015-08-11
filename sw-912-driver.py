@@ -16,6 +16,8 @@ T1_CMD = 'loopback_test {} {} 1000 ' + T1_SYSFS + ' /dev/gb/loopback0'
 T2_CMD = 'loopback_test sink 512 1000 ' + T2_SYSFS + ' /dev/gb/loopback1'
 APB_CMD = 'gbl -t {} -s {} -w 10 -n 1000 start'
 
+ROOT_GBL = '/sys/class/gb_loopback'
+
 
 # default IP of the AP
 HOST = '192.168.3.2'
@@ -163,10 +165,11 @@ def exec_cmd(svc, cmd):
         fatal_err("couldn't set power mode:", str(e))
 
 
-def exec_loopback(s, cmd):
-    s.sendline(cmd)  # run a command
-    s.prompt()       # match the prompt
-    info(s.before)   # print everything before the prompt.
+def exec_loopback(ssh, cmd):
+
+    ssh.sendline(cmd)
+    ssh.prompt()
+    info(ssh.before.strip())
 
 
 def run_from_ap(svc, host, test, size, verbose):
@@ -270,6 +273,38 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
             info('\nKeyboardInterrupt')
 
 
+def get_devices(ssh):
+
+    ssh.sendline('ls --color=never {}'.format(ROOT_GBL))
+    ssh.readline()
+    ssh.prompt()
+
+    return ssh.before.split()
+
+
+def get_device_sysfslink(ssh, dev):
+
+    ssh.sendline('readlink -f {}/{}'.format(ROOT_GBL, dev.replace('!','\!')))
+    ssh.readline()
+    ssh.prompt()
+
+    return '/'.join(ssh.before.strip().split('/')[:-2])
+
+
+def get_device_id(ssh, path):
+
+    ssh.sendline('cat {}/../../device_id'.format(path))
+    ssh.readline()
+    ssh.prompt()
+
+    return ssh.before.strip()
+
+
+def get_device_path(dev):
+
+     return '/dev/{}'.format(dev.replace('!','/'))
+
+
 #
 # main
 #
@@ -296,7 +331,29 @@ def main():
     parser.add_argument('--ap',
                         action='store_true',
                         help='Run test from AP instead of APBridge')
+    parser.add_argument('-l', '--list',
+                        action='store_true',
+                        help='List loopback devices')
     args = parser.parse_args()
+
+
+    info('Enumerating loopback devices in the endo...')
+
+    try:
+        ssh = pxssh.pxssh()
+        ssh.login(args.host, USER)
+        devs = get_devices(ssh)
+        for dev in devs:
+            p = get_device_sysfslink(ssh, dev)
+            d = get_device_id(ssh, p)
+            info('device_id[{}]={}, dev={}'.format(
+                    d, p.split('/')[-1], get_device_path(dev)))
+        ssh.logout()
+    except:
+        fatal_err('failed initializing AP connection through SSH')
+
+    if args.list:
+        return
 
     info('AP host: {}'.format(args.host))
 
