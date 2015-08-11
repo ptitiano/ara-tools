@@ -89,7 +89,14 @@ BeagleBone Black (BBB) Setup
         apt-get update && apt-get upgrade
         apt-get install git build-essential
 
-3. Update kernel and other greybus build dependencies:
+4. Run a kernel updater script (seems to be requried for the next step)
+
+        cd /opt/scripts/tools/
+        git pull
+        sudo ./update_kernel.sh
+        sudo reboot
+
+5. Update kernel and other greybus build dependencies:
 
         # Run on BBB via UART root console
         sudo apt-get install linux-image-4.1.4-bone15 \
@@ -101,7 +108,7 @@ BeagleBone Black (BBB) Setup
         root@beaglebone:~# uname -r
         4.1.4-bone15
 
-4. Fetch Greybus and gbsim on BBB and build the pieces you will need:
+6. Fetch Greybus and gbsim on BBB and build the pieces you will need:
 
         # Run on BBB via UART console
         mkdir -p src/greybus src/gbsim
@@ -112,7 +119,7 @@ BeagleBone Black (BBB) Setup
 
    Then make sure ~/src/gbsim/test/loopback is in your PATH.
 
-5. Set up SSH pubkey authentication between your host PC and BBB:
+7. Set up SSH pubkey authentication between your host PC and BBB:
 
         # Run from host Linux PC
         ssh-copy-id root@<beaglebone-ip-address>
