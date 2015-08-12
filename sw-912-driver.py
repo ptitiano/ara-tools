@@ -34,6 +34,7 @@ USB_DID = '0002'
 
 
 DRIVERS = set(('gb_loopback', 'gb_raw', 'gb_es2', 'greybus'))
+ENDO_TARGETS = set(('APB1', 'APB2', 'APB3', 'GPB1', 'GPB2', 'SVC'))
 
 # default IP of the AP
 HOST = '192.168.3.2'
@@ -298,7 +299,8 @@ def load_driver(ssh):
     # retrieve the last 4 items that should be the loaded drivers
     drv = set(ssh.before.split()[-4:])
     if drv != DRIVERS:
-        raise ValueError('Cannot load all the drivers {}'.format(drv))
+        raise ValueError('Cannot load all the drivers {}'.format(
+                            list(DRIVERS - drv)))
 
 
 def get_devices(ssh):
@@ -440,6 +442,10 @@ def main():
         t = get_target_type(tty, args.baudrate)
         info('  {} -> {}'.format(t.name, t.tty))
         targets[t.name] = t
+
+    if not (ENDO_TARGETS & set(targets)):
+        fatal_err('Cannot find any valid Endo modules.\
+                    The board might not be powered')
 
     if args.usb:
         return
