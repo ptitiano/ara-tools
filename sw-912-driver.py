@@ -21,6 +21,15 @@ APB_CMD = 'gbl -t {} -s {} -w 10 -n 10 start'
 
 ROOT_GBL = '/sys/class/gb_loopback'
 
+INSMOD_CMD = "export GB=/lib/modules/`uname -r`/kernel/drivers/greybus && \
+echo $GB && \
+insmod $GB/greybus.ko; \
+insmod $GB/gb-es2.ko; \
+insmod $GB/gb-raw.ko; \
+insmod $GB/gb-loopback.ko; \
+lsmod | grep gb_ | cut -f 1 -d ' '"
+
+DRIVERS = set(('gb_loopback', 'gb_raw', 'gb_es2', 'greybus'))
 
 # default IP of the AP
 HOST = '192.168.3.2'
@@ -268,6 +277,16 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
             info('\nKeyboardInterrupt')
 
 
+def load_driver(ssh):
+
+    ssh.sendline(INSMOD_CMD)
+    ssh.prompt()
+    # retrieve the last 4 items that should be the loaded drivers
+    drv = set(ssh.before.split()[-4:])
+    if drv != DRIVERS:
+        raise ValueError('Cannot load all the drivers {}'.format(drv))
+
+
 def get_devices(ssh):
 
     ssh.sendline('ls --color=never {}'.format(ROOT_GBL))
@@ -411,11 +430,14 @@ def main():
     if args.usb:
         return
 
-    info('Enumerating loopback devices in the endo...')
 
     try:
         ssh = pxssh.pxssh()
         ssh.login(args.host, USER)
+        info('Loading Greybus drivers...')
+        load_driver(ssh)
+        info('Greybus Driver loaded')
+        info('Enumerating loopback devices in the endo...')
         devs = get_devices(ssh)
     except:
         fatal_err('failed initializing AP connection through SSH')
