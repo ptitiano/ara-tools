@@ -193,7 +193,7 @@ def run_from_ap(svc, host, test, size, verbose, target):
 
     s = pxssh.pxssh()
     s.login(host, USER)
-    s.sendline('rm {}'.format(csv_path))  # run a command
+    s.sendline('rm {f}; touch {f}'.format(f=csv_path))  # run a command
     s.prompt()  # match the prompt
     info(s.before)  # print everything before the prompt.
 
