@@ -144,18 +144,10 @@ To run a particular test:
         - Linux Workstation Setup
 
 
-2. Find the SVC and APB2 tty devices, as well as the IP address for
-   the BBB's IP address on your LAN, then cache them in the
-   environment as LBTEST_SVC, LBTEST_APB2, and LBTEST_AP_IP,
-   respectively.
+2. Find the IP address for the BBB's IP address on your LAN, then cache it
+   in the environment as LBTEST_AP_IP.
 
    Example settings:
-
-        # SVC tty
-        export LBTEST_SVC=/dev/ttyUSB1
-
-        # APB2 tty
-        export LBTEST_APB2=/dev/ttyUSB0
 
         # BBB IP address
         export LBTEST_AP_IP=10.0.8.152
@@ -167,25 +159,15 @@ To run a particular test:
 
 5. Power cycle BDB2.
 
-6. Insert greybus modules on BBB:
+6. Insert USB cable from APB1 on BDB2 (CON128) to BBB USB host.
 
-        export GB=/lib/modules/`uname -r`/kernel/drivers/greybus
-        insmod $GB/greybus.ko
-        insmod $GB/gb-es2.ko
-        insmod $GB/gb-loopback.ko
-
-7. Insert USB cable from APB1 on BDB2 (CON128) to BBB USB host.
-
-8. Use sw-912-driver.py to run the test you are interested in. The
+7. Use sw-912-driver.py to run the test you are interested in. The
    procedure to run each test is documented in the following
    sub-items. Run from the Linux host PC shell.
 
    8.1 T1
 
-        ./sw-912-driver.py $LBTEST_SVC \
-                           $LBTEST_AP_IP \
-                           $LBTEST_APB2 \
-                           --ap -t sink
+        ./sw-912-driver.py $LBTEST_AP_IP --ap -t sink
 
    8.2 T2
 
@@ -198,24 +180,15 @@ To run a particular test:
 
    8.3 T3
 
-        ./sw-912-driver.py $LBTEST_SVC \
-                           $LBTEST_AP_IP \
-                           $LBTEST_APB2 \
-                           -t sink
+        ./sw-912-driver.py $LBTEST_AP_IP -t sink
 
    8.4 T4
 
-        ./sw-912-driver.py $LBTEST_SVC \
-                           $LBTEST_AP_IP \
-                           $LBTEST_APB2 \
-                           -t transfer
+        ./sw-912-driver.py $LBTEST_AP_IP -t transfer
 
    8.5 T5
 
-        ./sw-912-driver.py $LBTEST_SVC \
-                           $LBTEST_AP_IP \
-                           $LBTEST_APB2 \
-                           --ap -t transfer
+        ./sw-912-driver.py $LBTEST_AP_IP --ap -t transfer
 
    8.6 T1'
 
@@ -262,7 +235,7 @@ To run a particular test:
         XXX                   XXX
         XXXXXXXXXXXXXXXXXXXXXXXXX
 
-9. Collect results after test is finished.
+8. Collect results after test is finished.
 
    - Tests T1 and T5 will leave a .csv on the BBB in root's home
      directory that will be copied as well in the same directory from which
