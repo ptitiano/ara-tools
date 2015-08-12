@@ -27,6 +27,12 @@ insmod $GB/gb-raw.ko; \
 insmod $GB/gb-loopback.ko; \
 lsmod | grep gb_ | cut -f 1 -d ' '"
 
+
+# Toshiba APbridge USB ids
+USB_VID = 'ffff'
+USB_DID = '0002'
+
+
 DRIVERS = set(('gb_loopback', 'gb_raw', 'gb_es2', 'greybus'))
 
 # default IP of the AP
@@ -276,6 +282,15 @@ def run_from_apbridge(svc, host, test, size, verbose, apb):
             info('\nKeyboardInterrupt')
 
 
+def check_usb_connection(ssh):
+
+    ssh.sendline('lsusb -d {}:{}'.format(USB_VID, USB_DID))
+    ssh.readline()
+    ssh.prompt()
+    if ssh.before.strip() == '':
+        raise ValueError('Endo is not connected to USB')
+
+
 def load_driver(ssh):
 
     ssh.sendline(INSMOD_CMD)
@@ -433,9 +448,13 @@ def main():
     try:
         ssh = pxssh.pxssh()
         ssh.login(args.host, USER)
+
+        info('Checking USB connection...')
+        check_usb_connection(ssh)
+
         info('Loading Greybus drivers...')
         load_driver(ssh)
-        info('Greybus Driver loaded')
+
         info('Enumerating loopback devices in the endo...')
         devs = get_devices(ssh)
 
@@ -448,8 +467,8 @@ def main():
             info('  {}[{}]={}, dev={}'.format(
                     n, d, p.split('/')[-1], get_device_path(dev)))
 
-    except:
-        fatal_err('failed initializing AP connection through SSH')
+    except ValueError as e:
+        fatal_err(str(e))
         return
 
     ssh.logout()
