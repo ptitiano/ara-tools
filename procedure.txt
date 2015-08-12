@@ -265,7 +265,8 @@ To run a particular test:
 9. Collect results after test is finished.
 
    - Tests T1 and T5 will leave a .csv on the BBB in root's home
-     directory. 
+     directory that will be copied as well in the same directory from which
+     sw-912-driver.py was run.
 
    - Tests T2 and T2' ...
 
