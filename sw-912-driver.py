@@ -13,11 +13,9 @@ import serial
 import glob
 import re
 
-T1_SYSFS = '/sys/bus/greybus/devices/endo0:1:1:1:13/'
-T2_SYSFS = '/sys/bus/greybus/devices/endo0:1:2:1:13/'
-T1_CMD = 'loopback_test {} {} 1000 ' + T1_SYSFS + ' /dev/gb/loopback0'
-T2_CMD = 'loopback_test sink 512 1000 ' + T2_SYSFS + ' /dev/gb/loopback1'
-APB_CMD = 'gbl -t {} -s {} -w 10 -n 10 start'
+ITERATION = 10
+AP_CMD = 'loopback_test {} {} {} {}/ {}'
+APB_CMD = 'gbl -t {} -s {} -w 10 -n ' + str(ITERATION) + ' start'
 
 ROOT_GBL = '/sys/class/gb_loopback'
 
@@ -35,8 +33,8 @@ DRIVERS = set(('gb_loopback', 'gb_raw', 'gb_es2', 'greybus'))
 HOST = '192.168.3.2'
 USER = 'root'
 
-
 SVC_DEFAULT_BAUD = 115200
+
 
 PWRM_TO_CMDS = (
     ('PWM-G1, 1 lane', ['svc linktest -p 0 -m pwm -g 1 -s a -l 1',
@@ -172,15 +170,16 @@ def exec_loopback(ssh, cmd):
     info(ssh.before.strip())
 
 
-def run_from_ap(svc, host, test, size, verbose):
+def run_from_ap(svc, host, test, size, verbose, target):
 
     ssh_host = '{}@{}'.format(USER, host)
-    csv_path = '~{}/{}_{}_1000.csv'.format(USER, test, size)
+    csv_path = '~{}/{}_{}_{}.csv'.format(USER, test, size, ITERATION)
     csv_url = '{}:{}'.format(ssh_host, csv_path)
 
-    ap_test_cmd = T1_CMD.format(test, size)
+    ap_test_cmd = AP_CMD.format(test, size, ITERATION, target.sysfs, target.dev)
 
-    info(ssh_host, csv_path, csv_url, test, size, ap_test_cmd)
+    info(ssh_host, csv_path, csv_url, test, size)
+    info(ap_test_cmd)
 
     svcfd = fdpexpect.fdspawn(svc.fd, timeout=5)
 
@@ -224,7 +223,7 @@ def run_from_ap(svc, host, test, size, verbose):
 
 def run_from_apbridge(svc, host, test, size, verbose, apb):
 
-    csv_path = 'apb_{}_{}_1000.csv'.format(test, size)
+    csv_path = 'apb_{}_{}_{}.csv'.format(test, size, ITERATION)
 
     # gbl is using a slightly different name
     apb_test_cmd = APB_CMD.format(test.replace('transfer', 'xfer'), size)
@@ -439,20 +438,21 @@ def main():
         info('Greybus Driver loaded')
         info('Enumerating loopback devices in the endo...')
         devs = get_devices(ssh)
+
+        for dev in devs:
+            p = get_device_sysfslink(ssh, dev)
+            d = int(get_device_id(ssh, p))
+            n = id_to_name(d)
+            targets[n].sysfs = p
+            targets[n].dev = get_device_path(dev)
+            info('  {}[{}]={}, dev={}'.format(
+                    n, d, p.split('/')[-1], get_device_path(dev)))
+
     except:
         fatal_err('failed initializing AP connection through SSH')
-
-    for dev in devs:
-        p = get_device_sysfslink(ssh, dev)
-        d = int(get_device_id(ssh, p))
-        n = id_to_name(d)
-        targets[n].sysfs = p
-        targets[n].dev = get_device_path(dev)
-        info('{}[{}]={}, dev={}'.format(
-                n, d, p.split('/')[-1], get_device_path(dev)))
+        return
 
     ssh.logout()
-
 
     if args.list:
         return
@@ -484,7 +484,7 @@ def main():
     # Execute the above-defined power mode changes at the SVC
     # console.
     if args.ap:
-        run_from_ap(svc, args.host, args.test, args.size, args.verbose)
+        run_from_ap(svc, args.host, args.test, args.size, args.verbose, bridge)
     else:
         run_from_apbridge(svc, args.host, args.test, args.size, args.verbose,
                           apb)
