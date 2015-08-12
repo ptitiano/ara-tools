@@ -125,9 +125,7 @@ BeagleBone Black (BBB) Setup
         cd ~/src/greybus
         make && make install
         cd ~/src/gbsim/test/loopback
-        make
-
-   Then make sure ~/src/gbsim/test/loopback is in your PATH.
+        make && make install
 
 7. Set up SSH pubkey authentication between your host PC and BBB:
 
