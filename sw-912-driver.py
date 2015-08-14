@@ -380,7 +380,7 @@ def get_target_type(tty, baudrate):
         info('timeout {}'.format(fdp.before.strip()))
         return Target('UNK', tty)
     except pexpect.EOF:
-        info('EOF: Cannot reach the console')
+        info('Cannot reach the console {}'.format(tty))
         return Target('UNK', tty)
 
     if 'nsh>' in fdp.after:
@@ -392,7 +392,7 @@ def get_target_type(tty, baudrate):
             fdp.expect('nsh>')
             m = re.search('\[3000\]: (\d)', fdp.before)
             d = int(m.group(1))
-            return Target('', tty, d)
+            return Target('UNK', tty, d)
         except pexpect.TIMEOUT:
             info('{} timeout {}'.format(tty, fdp.before.strip()))
             return Target('UNK', tty)
@@ -468,6 +468,9 @@ def main():
             p = get_device_sysfslink(ssh, dev)
             d = int(get_device_id(ssh, p))
             n = id_to_name(d)
+            if not n in targets.keys():
+                info('{} UART is not connected'.format(n))
+                break
             targets[n].sysfs = p
             targets[n].dev = get_device_path(dev)
             info('  {}[{}]={}, dev={}'.format(
