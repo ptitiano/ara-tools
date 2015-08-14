@@ -390,7 +390,7 @@ def get_target_type(tty, baudrate):
         try:
             fdp.sendline('unipro r 0x3000 0')
             fdp.expect('nsh>')
-            m = re.search('val: (\d)', fdp.before)
+            m = re.search('\[3000\]: (\d)', fdp.before)
             d = int(m.group(1))
             return Target('', tty, d)
         except pexpect.TIMEOUT:
