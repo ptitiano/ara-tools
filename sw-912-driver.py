@@ -14,7 +14,7 @@ import glob
 import re
 
 ITERATION = 10
-AP_CMD = 'loopback_test {} {} {} {}/ {}'
+AP_CMD = 'loopback_test -t {} -s {} -i {} -m {}'
 APB_CMD = 'gbl -t {} -s {} -w 10 -n ' + str(ITERATION) + ' start'
 
 ROOT_GBL = '/sys/bus/greybus/devices'
@@ -187,7 +187,7 @@ def run_from_ap(svc, host, test, size, verbose, target):
     csv_path = '~{}/{}_{}_{}.csv'.format(USER, test, size, ITERATION)
     csv_url = '{}:{}'.format(ssh_host, csv_path)
 
-    ap_test_cmd = AP_CMD.format(test, size, ITERATION, target.sysfs, target.dev)
+    ap_test_cmd = AP_CMD.format(test, size, ITERATION, target.did)
 
     info(ssh_host, csv_path, csv_url, test, size)
     info(ap_test_cmd)
