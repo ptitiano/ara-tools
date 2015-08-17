@@ -388,7 +388,12 @@ def get_target_type(tty, baudrate):
             return Target('SVC', tty)
 
         try:
-            fdp.sendline('unipro r 0x3000 0')
+            # Split the command otherwise nuttx is missing some
+            # characters
+            cmd = 'unipro r 0x3000 0'
+            for c in cmd.split():
+                fdp.send(c + ' ')
+            fdp.sendline()
             fdp.expect('nsh>')
             m = re.search('\[3000\]: (\d)', fdp.before)
             d = int(m.group(1))
