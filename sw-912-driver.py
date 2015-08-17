@@ -175,6 +175,10 @@ def exec_loopback(ssh, cmd):
     ssh.sendline(cmd)
     ssh.prompt()
     info(ssh.before.strip())
+    if 'Usage' in ssh.before:
+        return -1
+    else:
+        return 0
 
 
 def run_from_ap(svc, host, test, size, verbose, target):
@@ -214,9 +218,15 @@ def run_from_ap(svc, host, test, size, verbose, target):
                 call(['ssh', ssh_host,
                       'echo "{}" >> {}'.format(pwrm, csv_path)])
 
-            exec_loopback(s, ap_test_cmd)
-            exec_loopback(s, ap_test_cmd)
-            exec_loopback(s, ap_test_cmd)
+            if exec_loopback(s, ap_test_cmd) != 0:
+                s.logout()
+                fatal_err('Invalid AP command!')
+            if exec_loopback(s, ap_test_cmd) != 0:
+                s.logout()
+                fatal_err('Invalid AP command!')
+            if exec_loopback(s, ap_test_cmd) != 0:
+                s.logout()
+                fatal_err('Invalid AP command!')
 
             count += 1
 
