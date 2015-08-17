@@ -17,7 +17,7 @@ ITERATION = 10
 AP_CMD = 'loopback_test {} {} {} {}/ {}'
 APB_CMD = 'gbl -t {} -s {} -w 10 -n ' + str(ITERATION) + ' start'
 
-ROOT_GBL = '/sys/class/gb_loopback'
+ROOT_GBL = '/sys/bus/greybus/devices'
 
 INSMOD_CMD = "export GB=/lib/modules/`uname -r`/kernel/drivers/greybus && \
 echo $GB && \
@@ -305,7 +305,7 @@ def load_driver(ssh):
 
 def get_devices(ssh):
 
-    ssh.sendline('ls --color=never {}'.format(ROOT_GBL))
+    ssh.sendline('find {} -name "*endo*:*:13"'.format(ROOT_GBL))
     ssh.readline()
     ssh.prompt()
 
@@ -314,7 +314,7 @@ def get_devices(ssh):
 
 def get_device_sysfslink(ssh, dev):
 
-    ssh.sendline('readlink -f {}/{}'.format(ROOT_GBL, dev.replace('!','\!')))
+    ssh.sendline('readlink -f {}'.format(dev))
     ssh.readline()
     ssh.prompt()
 
@@ -323,16 +323,11 @@ def get_device_sysfslink(ssh, dev):
 
 def get_device_id(ssh, path):
 
-    ssh.sendline('cat {}/../../device_id'.format(path))
+    ssh.sendline('cat {}/device_id'.format(path))
     ssh.readline()
     ssh.prompt()
 
     return ssh.before.strip()
-
-
-def get_device_path(dev):
-
-     return '/dev/{}'.format(dev.replace('!','/'))
 
 
 def id_to_name(did):
@@ -477,9 +472,9 @@ def main():
                 info('{} UART is not connected'.format(n))
                 break
             targets[n].sysfs = p
-            targets[n].dev = get_device_path(dev)
+            targets[n].dev = dev
             info('  {}[{}]={}, dev={}'.format(
-                    n, d, p.split('/')[-1], get_device_path(dev)))
+                    n, d, p.split('/')[-1], dev))
 
     except ValueError as e:
         fatal_err(str(e))
