@@ -44,54 +44,39 @@ SVC_DEFAULT_BAUD = 115200
 
 
 PWRM_TO_CMDS = (
-    ('PWM-G1, 1 lane', ['svc linktest -p 0 -m pwm -g 1 -s a -l 1',
-                        'svc linktest -p 1 -m pwm -g 1 -s a -l 1']),
-    ('PWM-G2, 1 lane', ['svc linktest -p 0 -m pwm -g 2 -s a -l 1',
-                        'svc linktest -p 1 -m pwm -g 2 -s a -l 1']),
-    ('PWM-G3, 1 lane', ['svc linktest -p 0 -m pwm -g 3 -s a -l 1',
-                        'svc linktest -p 1 -m pwm -g 3 -s a -l 1']),
-    ('PWM-G4, 1 lane', ['svc linktest -p 0 -m pwm -g 4 -s a -l 1',
-                        'svc linktest -p 1 -m pwm -g 4 -s a -l 1']),
-    ('PWM-G1, 2 lanes', ['svc linktest -p 0 -m pwm -g 1 -s a -l 2',
-                         'svc linktest -p 1 -m pwm -g 1 -s a -l 2']),
-    ('PWM-G2, 2 lanes', ['svc linktest -p 0 -m pwm -g 2 -s a -l 2',
-                         'svc linktest -p 1 -m pwm -g 2 -s a -l 2']),
-    ('PWM-G3, 2 lanes', ['svc linktest -p 0 -m pwm -g 3 -s a -l 2',
-                         'svc linktest -p 1 -m pwm -g 3 -s a -l 2']),
-    ('PWM-G4, 2 lanes', ['svc linktest -p 0 -m pwm -g 4 -s a -l 2',
-                         'svc linktest -p 1 -m pwm -g 4 -s a -l 2']),
-    ('HS-G1A, 1 lane', ['svc linktest -p 0 -m hs -g 1 -s a -l 1',
-                        'svc linktest -p 1 -m hs -g 1 -s a -l 1']),
-    ('HS-G2A, 1 lane', ['svc linktest -p 0 -m hs -g 2 -s a -l 1',
-                        'svc linktest -p 1 -m hs -g 2 -s a -l 1']),
-    ('HS-G1A, 2 lanes', ['svc linktest -p 0 -m hs -g 1 -s a -l 2',
-                         'svc linktest -p 1 -m hs -g 1 -s a -l 2']),
-    ('HS-G2A, 2 lanes', ['svc linktest -p 0 -m hs -g 2 -s a -l 2',
-                         'svc linktest -p 1 -m hs -g 2 -s a -l 2']),
-    ('HS-G1B, 1 lane', ['svc linktest -p 0 -m pwm -g 1 -s a -l 1',
-                        'svc linktest -p 1 -m pwm -g 1 -s a -l 1',
-                        'svc linktest -p 0 -m pwm -g 1 -s b -l 1',
-                        'svc linktest -p 1 -m pwm -g 1 -s b -l 1',
-                        'svc linktest -p 0 -m hs -g 1 -s b -l 1',
-                        'svc linktest -p 1 -m hs -g 1 -s b -l 1']),
-    ('HS-G2B, 1 lane', ['svc linktest -p 0 -m pwm -g 1 -s a -l 1',
-                        'svc linktest -p 1 -m pwm -g 1 -s a -l 1',
-                        'svc linktest -p 0 -m pwm -g 1 -s b -l 1',
-                        'svc linktest -p 1 -m pwm -g 1 -s b -l 1',
-                        'svc linktest -p 0 -m hs -g 2 -s b -l 1',
-                        'svc linktest -p 1 -m hs -g 2 -s b -l 1']),
-    ('HS-G1B, 2 lanes', ['svc linktest -p 0 -m pwm -g 1 -s a -l 2',
-                         'svc linktest -p 1 -m pwm -g 1 -s a -l 2',
-                         'svc linktest -p 0 -m pwm -g 1 -s b -l 2',
-                         'svc linktest -p 1 -m pwm -g 1 -s b -l 2',
-                         'svc linktest -p 0 -m hs -g 1 -s b -l 2',
-                         'svc linktest -p 1 -m hs -g 1 -s b -l 2']),
-    ('HS-G2B, 2 lanes', ['svc linktest -p 0 -m pwm -g 1 -s a -l 2',
-                         'svc linktest -p 1 -m pwm -g 1 -s a -l 2',
-                         'svc linktest -p 0 -m pwm -g 1 -s b -l 2',
-                         'svc linktest -p 1 -m pwm -g 1 -s b -l 2',
-                         'svc linktest -p 0 -m hs -g 2 -s b -l 2',
-                         'svc linktest -p 1 -m hs -g 2 -s b -l 2']))
+    ('PWM-G1, 1 lane',  ['svc linktest -p X -m pwm -g 1 -s a -l 1']),
+    ('PWM-G2, 1 lane',  ['svc linktest -p X -m pwm -g 2 -s a -l 1']),
+    ('PWM-G3, 1 lane',  ['svc linktest -p X -m pwm -g 3 -s a -l 1']),
+    ('PWM-G4, 1 lane',  ['svc linktest -p X -m pwm -g 4 -s a -l 1']),
+    ('PWM-G1, 2 lanes', ['svc linktest -p X -m pwm -g 1 -s a -l 2']),
+    ('PWM-G2, 2 lanes', ['svc linktest -p X -m pwm -g 2 -s a -l 2']),
+    ('PWM-G3, 2 lanes', ['svc linktest -p X -m pwm -g 3 -s a -l 2']),
+    ('PWM-G4, 2 lanes', ['svc linktest -p X -m pwm -g 4 -s a -l 2']),
+    ('HS-G1A, 1 lane',  ['svc linktest -p X -m hs  -g 1 -s a -l 1']),
+    ('HS-G2A, 1 lane',  ['svc linktest -p X -m hs  -g 2 -s a -l 1']),
+    ('HS-G1A, 2 lanes', ['svc linktest -p X -m hs  -g 1 -s a -l 2']),
+    ('HS-G2A, 2 lanes', ['svc linktest -p X -m hs  -g 2 -s a -l 2']),
+    ('HS-G1B, 1 lane',  ['svc linktest -p X -m pwm -g 1 -s a -l 1',
+                         'svc linktest -p X -m pwm -g 1 -s b -l 1',
+                         'svc linktest -p X -m hs  -g 1 -s b -l 1']),
+    ('HS-G2B, 1 lane',  ['svc linktest -p X -m pwm -g 1 -s a -l 1',
+                         'svc linktest -p X -m pwm -g 1 -s b -l 1',
+                         'svc linktest -p X -m hs  -g 2 -s b -l 1']),
+    ('HS-G1B, 2 lanes', ['svc linktest -p X -m pwm -g 1 -s a -l 2',
+                         'svc linktest -p X -m pwm -g 1 -s b -l 2',
+                         'svc linktest -p X -m hs  -g 1 -s b -l 2']),
+    ('HS-G2B, 2 lanes', ['svc linktest -p X -m pwm -g 1 -s a -l 2',
+                         'svc linktest -p X -m pwm -g 1 -s b -l 2',
+                         'svc linktest -p X -m hs  -g 2 -s b -l 2']))
+
+
+def get_pwrm_cmds(mode, port):
+    for pwrm, cmds in PWRM_TO_CMDS:
+        if pwrm == mode:
+            cmdlist = []
+            for c in cmds:
+                cmdlist.append(c.replace('X', str(port)))
+            return cmdlist
 
 #
 # UI
@@ -181,14 +166,18 @@ def exec_loopback(ssh, cmd):
         return 0
 
 
-def run_from_ap(svc, host, test, size, verbose, target):
+def run_from_ap(svc, host, test, size, verbose, bridges, targets):
 
     ssh_host = '{}@{}'.format(USER, host)
     csv_path = '~{}/{}_{}_{}.csv'.format(USER, test, size, ITERATION)
     csv_url = '{}:{}'.format(ssh_host, csv_path)
 
-    ap_test_cmd = AP_CMD.format(test, size, ITERATION, target.did)
+    m = 0
+    if bridges != ['APB2', 'APB3', 'GPB1']:
+        for b in bridges:
+            m += 1 << (targets[b].did - 2)
 
+    ap_test_cmd = AP_CMD.format(test, size, ITERATION, m)
     info(ssh_host, csv_path, csv_url, test, size)
     info(ap_test_cmd)
 
@@ -209,8 +198,11 @@ def run_from_ap(svc, host, test, size, verbose, target):
 
             info('\nTest ({}) - {}\n'.format(count, pwrm))
 
-            for cmd in cmds:
-                exec_svc_cmd(svcfd, cmd)
+            cmds = get_pwrm_cmds(pwrm, 0) # APB1
+            for b in bridges:
+                cmds = get_pwrm_cmds(pwrm, targets[b].did - 1)
+                for cmd in cmds:
+                    exec_svc_cmd(svcfd, cmd)
 
             if verbose:
                 # insert the test name into the CSV file
@@ -423,7 +415,9 @@ def main():
                         help='baud rate of SVC/APB tty, default {}'.format(
                             SVC_DEFAULT_BAUD))
     parser.add_argument('host', help='IP/hostname of target AP', default=HOST)
-    parser.add_argument('-b', '--bridge', help='apbridge2 tty', default='APB2')
+    parser.add_argument('-b', '--bridge', nargs='+',
+                        help='Target Bridges List (APB2, APB3, GPB1, ALL)',
+                        default=['APB2'])
     parser.add_argument('-s', '--size', default=512, help='Packet Size')
     parser.add_argument('-t', '--test',
                         default='sink',
@@ -507,22 +501,24 @@ def main():
     except:
         fatal_err('failed initializing SVC')
 
-
-    bridge = targets[args.bridge]
-
     try:
-        info('opening {} console {} at: {} baud'.format(
-                bridge.name, bridge.tty, args.baudrate))
-        apb = serial.Serial(port=bridge.tty, baudrate=args.baudrate)
-        info('flushing {} input buffer'.format(bridge.name))
-        apb.flushInput()
+        if args.bridge == ['ALL']:
+            args.bridge = ['APB2', 'APB3', 'GPB1']
+        for b in args.bridge:
+            bridge = targets[b]
+            info('opening {} console {} at: {} baud'.format(
+                    bridge.name, bridge.tty, args.baudrate))
+            apb = serial.Serial(port=bridge.tty, baudrate=args.baudrate)
+            info('flushing {} input buffer'.format(bridge.name))
+            apb.flushInput()
     except:
         fatal_err('failed initializing ' + bridge.name)
 
     # Execute the above-defined power mode changes at the SVC
     # console.
     if args.ap:
-        run_from_ap(svc, args.host, args.test, args.size, args.verbose, bridge)
+        run_from_ap(svc, args.host, args.test, args.size,
+                    args.verbose, args.bridge, targets)
     else:
         run_from_apbridge(svc, args.host, args.test, args.size, args.verbose,
                           apb)
