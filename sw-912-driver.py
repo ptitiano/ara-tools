@@ -14,7 +14,7 @@ import glob
 import re
 
 ITERATION = 10
-AP_CMD = 'loopback_test -t {} -s {} -i {} -m {}'
+AP_CMD = 'loopback_test -t {} -s {} -i {} -m {} -c \"{}\"'
 APB_CMD = 'gbl -t {} -s {} -w 10 -n ' + str(ITERATION) + ' start'
 
 ROOT_GBL = '/sys/bus/greybus/devices'
@@ -44,30 +44,30 @@ SVC_DEFAULT_BAUD = 115200
 
 
 PWRM_TO_CMDS = (
-    ('PWM-G1, 1 lane',  ['svc linktest -p X -m pwm -g 1 -s a -l 1']),
-    ('PWM-G2, 1 lane',  ['svc linktest -p X -m pwm -g 2 -s a -l 1']),
-    ('PWM-G3, 1 lane',  ['svc linktest -p X -m pwm -g 3 -s a -l 1']),
-    ('PWM-G4, 1 lane',  ['svc linktest -p X -m pwm -g 4 -s a -l 1']),
-    ('PWM-G1, 2 lanes', ['svc linktest -p X -m pwm -g 1 -s a -l 2']),
-    ('PWM-G2, 2 lanes', ['svc linktest -p X -m pwm -g 2 -s a -l 2']),
-    ('PWM-G3, 2 lanes', ['svc linktest -p X -m pwm -g 3 -s a -l 2']),
-    ('PWM-G4, 2 lanes', ['svc linktest -p X -m pwm -g 4 -s a -l 2']),
-    ('HS-G1A, 1 lane',  ['svc linktest -p X -m hs  -g 1 -s a -l 1']),
-    ('HS-G2A, 1 lane',  ['svc linktest -p X -m hs  -g 2 -s a -l 1']),
-    ('HS-G1A, 2 lanes', ['svc linktest -p X -m hs  -g 1 -s a -l 2']),
-    ('HS-G2A, 2 lanes', ['svc linktest -p X -m hs  -g 2 -s a -l 2']),
-    ('HS-G1B, 1 lane',  ['svc linktest -p X -m pwm -g 1 -s a -l 1',
-                         'svc linktest -p X -m pwm -g 1 -s b -l 1',
-                         'svc linktest -p X -m hs  -g 1 -s b -l 1']),
-    ('HS-G2B, 1 lane',  ['svc linktest -p X -m pwm -g 1 -s a -l 1',
-                         'svc linktest -p X -m pwm -g 1 -s b -l 1',
-                         'svc linktest -p X -m hs  -g 2 -s b -l 1']),
-    ('HS-G1B, 2 lanes', ['svc linktest -p X -m pwm -g 1 -s a -l 2',
-                         'svc linktest -p X -m pwm -g 1 -s b -l 2',
-                         'svc linktest -p X -m hs  -g 1 -s b -l 2']),
-    ('HS-G2B, 2 lanes', ['svc linktest -p X -m pwm -g 1 -s a -l 2',
-                         'svc linktest -p X -m pwm -g 1 -s b -l 2',
-                         'svc linktest -p X -m hs  -g 2 -s b -l 2']))
+    ('PWM-G1 - 1 lane',  ['svc linktest -p X -m pwm -g 1 -s a -l 1']),
+    ('PWM-G2 - 1 lane',  ['svc linktest -p X -m pwm -g 2 -s a -l 1']),
+    ('PWM-G3 - 1 lane',  ['svc linktest -p X -m pwm -g 3 -s a -l 1']),
+    ('PWM-G4 - 1 lane',  ['svc linktest -p X -m pwm -g 4 -s a -l 1']),
+    ('PWM-G1 - 2 lanes', ['svc linktest -p X -m pwm -g 1 -s a -l 2']),
+    ('PWM-G2 - 2 lanes', ['svc linktest -p X -m pwm -g 2 -s a -l 2']),
+    ('PWM-G3 - 2 lanes', ['svc linktest -p X -m pwm -g 3 -s a -l 2']),
+    ('PWM-G4 - 2 lanes', ['svc linktest -p X -m pwm -g 4 -s a -l 2']),
+    ('HS-G1A - 1 lane',  ['svc linktest -p X -m hs  -g 1 -s a -l 1']),
+    ('HS-G2A - 1 lane',  ['svc linktest -p X -m hs  -g 2 -s a -l 1']),
+    ('HS-G1A - 2 lanes', ['svc linktest -p X -m hs  -g 1 -s a -l 2']),
+    ('HS-G2A - 2 lanes', ['svc linktest -p X -m hs  -g 2 -s a -l 2']),
+    ('HS-G1B - 1 lane',  ['svc linktest -p X -m pwm -g 1 -s a -l 1',
+                          'svc linktest -p X -m pwm -g 1 -s b -l 1',
+                          'svc linktest -p X -m hs  -g 1 -s b -l 1']),
+    ('HS-G2B - 1 lane',  ['svc linktest -p X -m pwm -g 1 -s a -l 1',
+                          'svc linktest -p X -m pwm -g 1 -s b -l 1',
+                          'svc linktest -p X -m hs  -g 2 -s b -l 1']),
+    ('HS-G1B - 2 lanes', ['svc linktest -p X -m pwm -g 1 -s a -l 2',
+                          'svc linktest -p X -m pwm -g 1 -s b -l 2',
+                          'svc linktest -p X -m hs  -g 1 -s b -l 2']),
+    ('HS-G2B - 2 lanes', ['svc linktest -p X -m pwm -g 1 -s a -l 2',
+                          'svc linktest -p X -m pwm -g 1 -s b -l 2',
+                          'svc linktest -p X -m hs  -g 2 -s b -l 2']))
 
 
 def get_pwrm_cmds(mode, port):
@@ -177,9 +177,7 @@ def run_from_ap(svc, host, test, size, verbose, bridges, targets):
         for b in bridges:
             m += 1 << (targets[b].did - 2)
 
-    ap_test_cmd = AP_CMD.format(test, size, ITERATION, m)
     info(ssh_host, csv_path, csv_url, test, size)
-    info(ap_test_cmd)
 
     svcfd = fdpexpect.fdspawn(svc.fd, timeout=5)
 
@@ -204,11 +202,7 @@ def run_from_ap(svc, host, test, size, verbose, bridges, targets):
                 for cmd in cmds:
                     exec_svc_cmd(svcfd, cmd)
 
-            if verbose:
-                # insert the test name into the CSV file
-                # TODO: add a new column into the CSV instead of new row
-                call(['ssh', ssh_host,
-                      'echo "{}" >> {}'.format(pwrm, csv_path)])
+            ap_test_cmd = AP_CMD.format(test, size, ITERATION, m, pwrm)
 
             if exec_loopback(s, ap_test_cmd) != 0:
                 s.logout()
