@@ -13,9 +13,8 @@ import serial
 import glob
 import re
 
-ITERATION = 10
 AP_CMD = 'loopback_test -t {} -s {} -i {} -m {} -c \"{}\"'
-APB_CMD = 'gbl -t {} -s {} -w 10 -n ' + str(ITERATION) + ' start'
+APB_CMD = 'gbl -t {} -s {} -w 10 -n {} start'
 
 ROOT_GBL = '/sys/bus/greybus/devices'
 
@@ -307,10 +306,10 @@ def process_csv(test, size, iteration, bridges, targets):
         f.close()
 
 
-def run_from_ap(svc, host, test, size, verbose, bridges, targets):
+def run_from_ap(svc, host, test, size, iteration, verbose, bridges, targets):
 
     ssh_host = '{}@{}'.format(USER, host)
-    csv_path = '~{}/{}_{}_{}.csv'.format(USER, test, size, ITERATION)
+    csv_path = '~{}/{}_{}_{}.csv'.format(USER, test, size, iteration)
     csv_url = '{}:{}'.format(ssh_host, csv_path)
 
     m = 0
@@ -343,7 +342,7 @@ def run_from_ap(svc, host, test, size, verbose, bridges, targets):
                 for cmd in cmds:
                     exec_svc_cmd(svcfd, cmd)
 
-            ap_test_cmd = AP_CMD.format(test, size, ITERATION, m, pwrm)
+            ap_test_cmd = AP_CMD.format(test, size, iteration, m, pwrm)
 
             if exec_loopback(s, ap_test_cmd) != 0:
                 s.logout()
@@ -365,15 +364,16 @@ def run_from_ap(svc, host, test, size, verbose, bridges, targets):
     s.logout()
 
     # Post-process CSV file
-    process_csv(test, size, ITERATION, bridges, targets)
+    process_csv(test, size, iteration, bridges, targets)
 
 
-def run_from_apbridge(svc, host, test, size, verbose, apb):
+def run_from_apbridge(svc, host, test, size, iteration, verbose, apb):
 
-    csv_path = 'apb_{}_{}_{}.csv'.format(test, size, ITERATION)
+    csv_path = 'apb_{}_{}_{}.csv'.format(test, size, iteration)
 
     # gbl is using a slightly different name
-    apb_test_cmd = APB_CMD.format(test.replace('transfer', 'xfer'), size)
+    apb_test_cmd = APB_CMD.format(test.replace('transfer', 'xfer'),
+                                  size, iteration)
 
     info(csv_path, test, size, apb_test_cmd)
 
@@ -561,6 +561,9 @@ def main():
                         default='sink',
                         choices=['sink', 'transfer', 'ping'],
                         help='Test type')
+    parser.add_argument('-i', '--iteration',
+                        help='The number of iterations to run the test over',
+                        default=10)
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         help='Add extra info in CSV')
@@ -642,29 +645,34 @@ def main():
     except:
         fatal_err('failed initializing SVC')
 
-    try:
-        if args.bridge == ['ALL']:
-            args.bridge = ['APB2', 'APB3', 'GPB1']
-        for b in args.bridge:
+
+    if args.bridge == ['ALL']:
+        args.bridge = ['APB2', 'APB3', 'GPB1']
+    for b in args.bridge:
+        try:
             bridge = targets[b]
+        except:
+            fatal_err('invalid bridge name!!! [{}]'.format(b))
+
+        try:
             info('opening {} console {} at: {} baud'.format(
-                    bridge.name, bridge.tty, args.baudrate))
+                 bridge.name, bridge.tty, args.baudrate))
             apb = serial.Serial(port=bridge.tty, baudrate=args.baudrate)
             info('flushing {} input buffer'.format(bridge.name))
             apb.flushInput()
-    except:
-        fatal_err('failed initializing ' + bridge.name)
+        except:
+            fatal_err('failed initializing ' + bridge.name)
 
     # Execute the above-defined power mode changes at the SVC
     # console.
     if args.pp:
-        process_csv(args.test, args.size, ITERATION, args.bridge, targets)
+        process_csv(args.test, args.size, args.iteration, args.bridge, targets)
     elif args.ap:
-        run_from_ap(svc, args.host, args.test, args.size,
+        run_from_ap(svc, args.host, args.test, args.size, args.iteration,
                     args.verbose, args.bridge, targets)
     else:
-        run_from_apbridge(svc, args.host, args.test, args.size, args.verbose,
-                          apb)
+        run_from_apbridge(svc, args.host, args.test, args.size, args.iteration,
+                          args.verbose, apb)
 
 if __name__ == '__main__':
     main()
