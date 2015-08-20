@@ -166,6 +166,147 @@ def exec_loopback(ssh, cmd):
         return 0
 
 
+def process_csv(test, size, iteration, bridges, targets):
+    # 1/ loopback_test app generates a single CSV file with all the tests
+    #    results. Split file in multiple ones (one per target)
+    # 2/ A same test is run 3 times. Average test results.
+    # 3/ Rename targets from /sys/bus/greybus/devices/endoN:x:y:z:/ to [G-A]PBx
+
+    csvfilecolumns = {'date': 0,
+                      'description': 1,
+                      'operation': 2,
+                      'device': 3,
+                      'size': 4,
+                      'iterations': 5,
+                      'error': 6,
+                      'req_min': 7,
+                      'req_max': 8,
+                      'req_avg': 9,
+                      'req_jitter': 10,
+                      'lat_min': 11,
+                      'lat_max': 12,
+                      'lat_avg': 13,
+                      'lat_jitter': 14,
+                      'gb_lat_min': 15,
+                      'gb_lat_max': 16,
+                      'gb_lat_avg': 17,
+                      'gb_lat_jitter': 18,
+                      'throughput_min': 19,
+                      'throughput_max': 20,
+                      'throughput_avg': 21,
+                      'throughput_jitter': 22,
+                      'lat_iter_1' : 23}
+    measurecolumns = ['req_min',
+                      'req_max',
+                      'req_avg',
+                      'req_jitter',
+                      'lat_min',
+                      'lat_max',
+                      'lat_avg',
+                      'lat_jitter',
+                      'gb_lat_min',
+                      'gb_lat_max',
+                      'gb_lat_avg',
+                      'gb_lat_jitter',
+                      'throughput_min',
+                      'throughput_max',
+                      'throughput_avg',
+                      'throughput_jitter']
+    testruns = 3
+
+    info("Post-processing data...")
+    # Retrieve header and data from CSV file
+    try:
+        with open('./{}_{}_{}.csv'.format(test, size, iteration), 'r') as \
+             csvfile:
+            # Retrieve CSV header, containing column description
+            header = csvfile.readline().split(',')
+            # Retrieve data
+            csvfiledata = csvfile.read()
+    except:
+        fatal_err("Failed to open {} file!!!".format('./{}_{}_{}.csv'.format(
+                  test, size, iteration)))
+
+    # Discard header last items
+    # Replace 'Test Description' with 'Unipro Power Mode'
+    header = header[:csvfilecolumns['throughput_jitter'] + 1]
+    header[csvfilecolumns['description']] = 'Unipro Power Mode'
+    # Split data into lines
+    csvfiledata = csvfiledata.split("\n")
+
+    # Get test date
+    testdate = csvfiledata[0].split(',', 1)[0].split(' ', 1)[0]
+
+    # Create individual CSV files, one per unipro device + aggregated
+    # 1st data line is the aggregated results
+    csvfilelist = []
+    csvfilecount = len(bridges) + 1
+    devlist = []
+    filename = './{}_{}_{}_{}_agg.csv'.format(testdate, test, size, iteration)
+    f = open(filename, 'w')
+    csvfilelist.append(f)
+    for i in range(len(bridges)):
+        dev = csvfiledata[i + 1].split(",", csvfilecolumns['device'] + 1)
+        dev = dev[csvfilecolumns['device']]
+        dev = int(dev.split(':')[2])
+        for b in bridges:
+            if targets[b].did == dev:
+                devlist.append(targets[b].name)
+                filename = './{}_{}_{}_{}_{}.csv'.format(testdate, test, size,
+                                                         iteration,
+                                                         targets[b].name)
+                f = open(filename, 'w')
+                csvfilelist.append(f)
+
+    # Add header to CSV files
+    for f in csvfilelist:
+        for c in range(len(header)):
+            f.write(header[c])
+            if c != len(header) - 1:
+                f.write(',')
+            else:
+                f.write('\n')
+
+    # Each test for a given speed is run 3 times
+    # Fill CSV files with averaged values
+    speedcount = len(csvfiledata) / csvfilecount / testruns
+    for s in range(speedcount):
+        speedrowstart = (s * testruns * csvfilecount)
+        for f in range(csvfilecount):
+            datarowstart = speedrowstart + f
+            data = csvfiledata[datarowstart].split(',')
+
+            csvfilelist[f].write(data[csvfilecolumns['date']] + ',')
+            csvfilelist[f].write(data[csvfilecolumns['description']] + ',')
+            csvfilelist[f].write(data[csvfilecolumns['operation']] + ',')
+            if f == 0:
+                csvfilelist[f].write('Aggregated,')
+            else:
+                csvfilelist[f].write(devlist[f - 1] + ',')
+            csvfilelist[f].write(data[csvfilecolumns['size']] + ',')
+            csvfilelist[f].write(data[csvfilecolumns['iterations']] + ',')
+            error_total = 0
+            for t in range(testruns):
+                mrow = datarowstart + (t * csvfilecount)
+                measurements = csvfiledata[mrow].split(',')
+                error_total += int(measurements[csvfilecolumns['error']])
+            csvfilelist[f].write(str(error_total))
+            for m in measurecolumns:
+                avgm = 0
+                for t in range(testruns):
+                    mrow = datarowstart + (t * csvfilecount)
+                    measurements = csvfiledata[mrow].split(',')
+                    avgm += int(float(measurements[csvfilecolumns[m]]))
+                avgm = avgm / testruns
+                csvfilelist[f].write(',' + str(int(avgm)))
+            csvfilelist[f].write('\n')
+    # Close CSV files:
+    info('Post-processing completed.Measurement data saved into:')
+    for f in csvfilelist:
+        info('  {}'.format(f.name))
+        f.close()
+
+
 def run_from_ap(svc, host, test, size, verbose, bridges, targets):
 
     ssh_host = '{}@{}'.format(USER, host)
@@ -222,6 +363,9 @@ def run_from_ap(svc, host, test, size, verbose, bridges, targets):
     # transfer the results CSV file to from AP to Host
     call(['scp', csv_url, '.'])
     s.logout()
+
+    # Post-process CSV file
+    process_csv(test, size, ITERATION, bridges, targets)
 
 
 def run_from_apbridge(svc, host, test, size, verbose, apb):
@@ -429,6 +573,9 @@ def main():
     parser.add_argument('-u', '--usb',
                         action='store_true',
                         help='List USB tty')
+    parser.add_argument('--pp',
+                        action='store_true',
+                        help='Post-process CSV File only')
     args = parser.parse_args()
 
 
@@ -510,7 +657,9 @@ def main():
 
     # Execute the above-defined power mode changes at the SVC
     # console.
-    if args.ap:
+    if args.pp:
+        process_csv(args.test, args.size, ITERATION, args.bridge, targets)
+    elif args.ap:
         run_from_ap(svc, args.host, args.test, args.size,
                     args.verbose, args.bridge, targets)
     else:
