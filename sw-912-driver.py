@@ -69,6 +69,9 @@ PWRM_TO_CMDS = (
                           'svc linktest -p X -m hs  -g 2 -s b -l 2']))
 
 
+verbose = False
+
+
 def get_pwrm_cmds(mode, port):
     for pwrm, cmds in PWRM_TO_CMDS:
         if pwrm == mode:
@@ -85,6 +88,12 @@ def get_pwrm_cmds(mode, port):
 def info(*args, **kwargs):
     kwargs['file'] = sys.stdout
     print(*args, **kwargs)
+
+
+def debug(*args, **kwargs):
+    global verbose
+    if verbose == True:
+        info(*args, **kwargs)
 
 
 def err(*args, **kwargs):
@@ -149,16 +158,22 @@ def gbl_stats(f, cmd):
 
 def exec_svc_cmd(svc, cmd):
 
+    global verbose
+    if verbose == False:
+        info(cmd)
     svc.sendline(cmd)
     svc.expect('nsh>')
-    info(svc.before.strip())
+    debug(svc.before.strip())
 
 
 def exec_loopback(ssh, cmd):
 
+    global verbose
+    if verbose == False:
+        info(cmd)
     ssh.sendline(cmd)
     ssh.prompt()
-    info(ssh.before.strip())
+    debug(ssh.before.strip())
     if 'Usage' in ssh.before:
         return -1
     else:
@@ -306,7 +321,7 @@ def process_csv(test, size, iteration, bridges, targets):
         f.close()
 
 
-def run_from_ap(svc, host, test, size, iteration, verbose, bridges, targets):
+def run_from_ap(svc, host, test, size, iteration, bridges, targets):
 
     ssh_host = '{}@{}'.format(USER, host)
     csv_path = '~{}/{}_{}_{}.csv'.format(USER, test, size, iteration)
@@ -317,7 +332,12 @@ def run_from_ap(svc, host, test, size, iteration, verbose, bridges, targets):
         for b in bridges:
             m += 1 << (targets[b].did - 2)
 
-    info(ssh_host, csv_path, csv_url, test, size)
+    debug('SSH Host: {}'.format(ssh_host))
+    debug('CSV File Path: {}'.format(csv_path))
+    debug('CSV File URL: {}'.format(csv_url))
+    debug('Targets: {} (m={})'.format(bridges, m))
+    debug('Loopback Operation: {}'.format(test))
+    debug('Iterations: {}'.format(size))
 
     svcfd = fdpexpect.fdspawn(svc.fd, timeout=5)
 
@@ -327,7 +347,7 @@ def run_from_ap(svc, host, test, size, iteration, verbose, bridges, targets):
     s.login(host, USER)
     s.sendline('rm {f}; touch {f}'.format(f=csv_path))  # run a command
     s.prompt()  # match the prompt
-    info(s.before)  # print everything before the prompt.
+    debug(s.before)  # print everything before the prompt.
 
     count = 1
 
@@ -564,9 +584,9 @@ def main():
     parser.add_argument('-i', '--iteration',
                         help='The number of iterations to run the test over',
                         default=10)
-    parser.add_argument('-v', '--verbose',
+    parser.add_argument('-v', '--verbose', dest="verbose", default=False,
                         action='store_true',
-                        help='Add extra info in CSV')
+                        help='Make script execution more verbose')
     parser.add_argument('--ap',
                         action='store_true',
                         help='Run test from AP instead of APBridge')
@@ -630,6 +650,8 @@ def main():
 
     ssh.logout()
 
+    global verbose
+    verbose = args.verbose
     if args.list:
         return
 
@@ -669,10 +691,10 @@ def main():
         process_csv(args.test, args.size, args.iteration, args.bridge, targets)
     elif args.ap:
         run_from_ap(svc, args.host, args.test, args.size, args.iteration,
-                    args.verbose, args.bridge, targets)
+                    args.bridge, targets)
     else:
         run_from_apbridge(svc, args.host, args.test, args.size, args.iteration,
-                          args.verbose, apb)
+                          0, apb)
 
 if __name__ == '__main__':
     main()
