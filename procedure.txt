@@ -182,7 +182,7 @@ To run a particular test:
 
    8.1 T1
 
-        ./sw-912-driver.py $LBTEST_AP_IP --ap -t sink
+        ./sw-912-driver.py $LBTEST_AP_IP --ap -t sink -b APB2 -i100
 
    8.2 T2
 
