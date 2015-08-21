@@ -186,12 +186,7 @@ To run a particular test:
 
    8.2 T2
 
-        XXXXXXXXXXXXXXXXXXXXXXXXX
-        XXX      FIXME        XXX
-        XXX                   XXX
-        XXX Need instructions XXX
-        XXX                   XXX
-        XXXXXXXXXXXXXXXXXXXXXXXXX
+        ./sw-912-driver.py $LBTEST_AP_IP --ap -b APB2 APB3 -i100
 
    8.3 T3
 
