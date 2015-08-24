@@ -5,6 +5,7 @@ from collections import OrderedDict
 from subprocess import call, check_call
 from time import sleep, strftime
 from pprint import pprint
+from os import rename
 import pexpect, fdpexpect
 import pxssh
 import sys
@@ -180,7 +181,7 @@ def exec_loopback(ssh, cmd):
         return 0
 
 
-def process_csv(test, size, iteration, bridges, targets):
+def process_csv(csvfile, test, testdate, size, iteration, bridges, targets):
     # 1/ loopback_test app generates a single CSV file with all the tests
     #    results. Split file in multiple ones (one per target)
     # 2/ A same test is run 3 times. Average test results.
@@ -231,15 +232,14 @@ def process_csv(test, size, iteration, bridges, targets):
     info("Post-processing data...")
     # Retrieve header and data from CSV file
     try:
-        with open('./{}_{}_{}.csv'.format(test, size, iteration), 'r') as \
+        with open(csvfile, 'r') as \
              csvfile:
             # Retrieve CSV header, containing column description
             header = csvfile.readline().split(',')
             # Retrieve data
             csvfiledata = csvfile.read()
     except:
-        fatal_err("Failed to open {} file!!!".format('./{}_{}_{}.csv'.format(
-                  test, size, iteration)))
+        fatal_err("Failed to open {} file!!!".format(csvfile))
 
     # Discard header last items
     # Replace 'Test Description' with 'Unipro Power Mode'
@@ -247,9 +247,6 @@ def process_csv(test, size, iteration, bridges, targets):
     header[csvfilecolumns['description']] = 'Unipro Power Mode'
     # Split data into lines
     csvfiledata = csvfiledata.split("\n")
-
-    # Get test date
-    testdate = csvfiledata[0].split(',', 1)[0].split(' ', 1)[0]
 
     # Create individual CSV files, one per unipro device + aggregated
     # 1st data line is the aggregated results
@@ -383,8 +380,24 @@ def run_from_ap(svc, host, test, size, iteration, bridges, targets):
     call(['scp', csv_url, '.'])
     s.logout()
 
+    # Prefix CSV file with test date (to avoid loosing previous test results)
+    # Retrieve header from CSV file
+    csvfilename = './{}_{}_{}.csv'.format(test, size, iteration)
+    with open(csvfilename, 'r') as csvfile:
+        header = csvfile.readline()
+        datarow1 = csvfile.readline().split(',')
+    try:
+        testdate = datarow1[0].replace('-', '').replace(':', '').replace(' ',
+                                                                         '-')
+    except:
+        info('Failed to extract test date from header! Using default.')
+        testdate = '19700101-000000'
+    newcsvfilename = './{}_{}'.format(testdate, csvfilename[2:])
+    rename(csvfilename, newcsvfilename)
+
     # Post-process CSV file
-    process_csv(test, size, iteration, bridges, targets)
+    process_csv(newcsvfilename, test, testdate, size, iteration, bridges,
+                targets)
 
 
 def run_from_apbridge(svc, host, test, size, iteration, verbose, apb):
@@ -596,8 +609,7 @@ def main():
     parser.add_argument('-u', '--usb',
                         action='store_true',
                         help='List USB tty')
-    parser.add_argument('--pp',
-                        action='store_true',
+    parser.add_argument('--pp', nargs=1,
                         help='Post-process CSV File only')
     args = parser.parse_args()
 
@@ -688,7 +700,8 @@ def main():
     # Execute the above-defined power mode changes at the SVC
     # console.
     if args.pp:
-        process_csv(args.test, args.size, args.iteration, args.bridge, targets)
+        process_csv(args.pp[0], args.test, args.pp[0].split('_', 1)[0],
+                    args.size, args.iteration, args.bridge, targets)
     elif args.ap:
         run_from_ap(svc, args.host, args.test, args.size, args.iteration,
                     args.bridge, targets)
