@@ -464,7 +464,8 @@ def run_from_ap(svc, host, test, size, iteration, bridges, targets):
     debug('CSV File URL: {}'.format(csv_url))
     debug('Targets: {} (m={})'.format(bridges, m))
     debug('Loopback Operation: {}'.format(test))
-    debug('Iterations: {}'.format(size))
+    debug('Payload: {}B'.format(size))
+    debug('Iterations: {}'.format(iteration))
 
     svcfd = fdpexpect.fdspawn(svc.fd, timeout=5)
 
@@ -480,10 +481,12 @@ def run_from_ap(svc, host, test, size, iteration, bridges, targets):
 
     try:
         for pwrm, cmds in PWRM_TO_CMDS:
-
             info('\nTest ({}) - {}\n'.format(count, pwrm))
-
-            cmds = get_pwrm_cmds(pwrm, 0) # APB1
+            # Set APB1 link power mode
+            cmds = get_pwrm_cmds(pwrm, 0)
+            for cmd in cmds:
+                    exec_svc_cmd(svcfd, cmd)
+            # Set other bridge(s) link power mode
             for b in bridges:
                 cmds = get_pwrm_cmds(pwrm, targets[b].did - 1)
                 for cmd in cmds:
