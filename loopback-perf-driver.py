@@ -72,6 +72,8 @@ PWRM_TO_CMDS = (
                           'svc linktest -p X -m pwm -g 1 -s b -l 2',
                           'svc linktest -p X -m hs  -g 2 -s b -l 2']))
 
+T1_ODS_TEMPLATE = 'loopback-perf-AP-to-APB2-template.ods'
+T2_ODS_TEMPLATE = 'loopback-perf-AP-to-APB2-APB3-template.ods'
 
 verbose = False
 
@@ -374,7 +376,7 @@ def generate_charts(csvfile, bridges, scenario):
     try:
         odsfilename = './{}_charts.ods'.format(prefix)
         debug('.ods filename: {}'.format(odsfilename))
-        shutil.copy('unipro_perf_T2_charts_template.ods', odsfilename)
+        shutil.copy(T2_ODS_TEMPLATE, odsfilename)
         # Retrieve .ods file sheets
         spreadsheet = ezodf.opendoc(odsfilename)
         sheets = spreadsheet.sheets

@@ -3,6 +3,8 @@
 from os import system
 import argparse
 
+LOOPBACK_PERF_DRIVER = './loopback-perf-driver.py'
+
 def main():
     # Parse arguments.
     parser = argparse.ArgumentParser()
@@ -19,7 +21,7 @@ def main():
     args = parser.parse_args()
 
     # Call 'sw-912-driver.py' with T2-specific options
-    cmd = './sw-912-driver.py '
+    cmd = '{} '.format(LOOPBACK_PERF_DRIVER)
     # User command-line options
     cmd += '{} '.format(args.host)
     if args.baudrate:
@@ -30,7 +32,7 @@ def main():
         cmd += '-i {} '.format(args.iteration)
     if args.verbose:
         cmd += '-v'.format(args.baudrate)
-    # T2-specific options
+    # 'AP to APB2+APB3' test case specific options ('T2')
     cmd += ' --ap'
     cmd += ' -t sink'
     cmd += ' -b APB2 APB3'

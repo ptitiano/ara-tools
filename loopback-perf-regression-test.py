@@ -30,9 +30,9 @@
 # @brief   ARA Unipro performance non-regression test script
 # @author  Patrick Titiano
 #
-# usage: ara_up_perf_regtest.py inputfile1 inputfile2 [-h] [-v]
-#                                                     [-o OUTPUTFILE]
-#                                                     [-t THRESHOLD]
+# usage: ./loopback-perf-regression-test.py inputfile1 inputfile2 [-h] [-v]
+#                                                      [-o OUTPUTFILE]
+#                                                      [-t THRESHOLD]
 #
 # Compare measurements values from inputfile2 with inputfile1.
 #
@@ -96,6 +96,7 @@ HEADER_ROW_IN2 = HEADER_ROW_IN1 + ROW_OFFSET_IN1_IN2
 HEADER_ROW_DELTA = 42
 HEADER_ROW_DELTA_PCT = 63
 HEADER_ROW_DELTA_COL = 1
+TEMPLATE_ODS_FILE = './loopback-perf-regression-test-template.ods'
 
 verbose = False
 warn_threshold = 5 # %
@@ -221,7 +222,7 @@ def compare(filein1, filein2, fileout):
 
     # Clone output spreadsheet from template, and open it
     try:
-        shutil.copy('ara_up_perf_regtest_template.ods', fileout)
+        shutil.copy(TEMPLATE_ODS_FILE, fileout)
         # Retrieve .ods file sheets
         spreadsheets['out'] = ezodf.opendoc(fileout)
         sheets['out'] = spreadsheets['out'].sheets
