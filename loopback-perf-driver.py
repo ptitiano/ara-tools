@@ -36,8 +36,8 @@
 #                                       [-s SIZE]
 #                                       [-t {sink,transfer,ping}]
 #                                       [-i ITERATION] [-v]
-#                                       [--ap] [-l] [-u] [--pp PP]
-#                                       [-c CSVFILE]
+#                                       [--ap] [-l] [-u]
+#                                       [-p CSVFILE] [-c CSVFILE]
 #
 # Use this script to generate Greybus loopback traffic from AP module to
 # a list of Unipro bridges (APB2, APB3, GPB1).
@@ -49,8 +49,8 @@
 # Use '-t' option to change the loopback operation type.
 # Use '-s' option to change the size operation payload size.
 # Use '-i' to change the number to iperations to run the test over.
-# Use '--pp' option to only generate charts from an existing .osd file.
-# use '-c' option to only generate charts from an existing CSV file.
+# Use '-p' option to only post-process an existing CSV file.
+# use '-c' option to only generate charts from existing CSV files.
 # Use '-l' option to list available loopback devices.
 # Use '-u' option to list available USB tty.
 # Use '-v' to make script more verbose (debug purposes).
@@ -808,8 +808,8 @@ def main():
     parser.add_argument('-u', '--usb',
                         action='store_true',
                         help='List USB tty')
-    parser.add_argument('--pp', nargs=1,
-                        help='Post-process CSV File only')
+    parser.add_argument('-p', '--pp', nargs=1,
+                        help='Only post-process an existing CSV File.')
     parser.add_argument('-c', '--charts', nargs=1,
                         help='Only generate charts from an existing CSV file.')
     args = parser.parse_args()
