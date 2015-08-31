@@ -84,7 +84,6 @@ def main():
     cmd += ' --ap'
     cmd += ' -t sink'
     cmd += ' -b APB2 APB3'
-    cmd += ' -c T2'
 
     if args.verbose:
         print(cmd)
