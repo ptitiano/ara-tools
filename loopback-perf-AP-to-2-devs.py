@@ -31,8 +31,8 @@
 #
 # @author  Patrick Titiano
 #
-# usage: ./loopback-perf-AP-to-APB2-APB3.py HOST [-h] [-r BAUDRATE] [-s SIZE]
-#                                                [-i ITERATION] [-v]
+# usage: ./loopback-perf-AP-to-2-devs.py HOST [-h] [-r BAUDRATE] [-s SIZE]
+#                                             [-i ITERATION] [-v]
 #
 # Use this script to generate a predefined loopback traffic (sink operations)
 # from AP module to APB2 and APB3 bridges in parallel.
@@ -68,7 +68,7 @@ def main():
                         help='Make script execution more verbose')
     args = parser.parse_args()
 
-    # Call 'sw-912-driver.py' with T2-specific options
+    # Call loopback perf driver with T2-specific options
     cmd = '{} '.format(LOOPBACK_PERF_DRIVER)
     # User command-line options
     cmd += '{} '.format(args.host)
